@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from string import ascii_uppercase
 import os
 import base64
 import json
@@ -51,16 +52,30 @@ def decrypt_message(encrypted_message, key):
     return decrypted_message.decode()
 
 
-# Generate a random numeric code for the handshake
-client_code = random.randint(1000, 9999)
-
 connected_clients = {}
+
+# Generate a random code for the handshake
+def generate_secret_word(length):
+    vowels = 'aeiou'
+    consonants = 'bcdfghjklmnpqrstvwxyz'
+    secret_word = ''
+
+    for i in range(length):
+        if i % 2 == 0:
+            secret_word += random.choice(consonants)
+        else:
+            secret_word += random.choice(vowels)
+
+    return secret_word
+
+
 
 
 @app.route('/', strict_slashes=False, methods=["POST", "GET"])
 @app.route('/home', strict_slashes=False, methods=["POST", "GET"])
 def index():
-    return render_template('index.html', code=client_code)
+    code = generate_secret_word(5)
+    return render_template('index.html', code=code)
 
 
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
@@ -134,4 +149,4 @@ def handle_send_message(data):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0', port=7000, debug=True)
