@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %} StealthPortal {% endblock title %}
+{% block content %}
+  <form method="post" class="buttons" id="connect-form">
+    <h3>Connect To Device</h3>
+    <p>{{code}}</p>
+    <div class="connect">
+      <input type="text" placeholder="Enter Secret Key" name="code" value="{{code}}" />
+      <button type="submit" name="connect">Connect</button>
+    </div>
+  </form>
+
+  <!-- Message box for displaying server messages -->
+  <div id="message-box" class="hidden"></div>
+
+{% endblock content %}
