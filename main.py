@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request, flash, session
 from flask_socketio import SocketIO, emit
 from forms import RegistrationForm, LoginForm
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from string import ascii_uppercase
+from datetime import timedelta
+import uuid
 import os
 import base64
 import json
@@ -13,7 +14,7 @@ import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'c0851757a345207ea1e92661138d847b'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Key derivation function
 
@@ -68,15 +69,46 @@ def generate_secret_word(length):
 
     return secret_word
 
-
-
+def validate_secret(secret_word):
+    for client_id, client_secret in connected_clients.items():
+        if client_secret == secret_word:
+            return True
+        return False
 
 @app.route('/', strict_slashes=False, methods=["POST", "GET"])
 @app.route('/home', strict_slashes=False, methods=["POST", "GET"])
 def index():
+    client_id = session.get('client_id')
+    if request.method == "POST":
+        submitted_code = request.form.get("code")
+        connect_success = validate_secret(submitted_code)
+
+        connected_clients[client_id] = submitted_code
+        print("Codes stored in session:", connected_clients)
+
+        return render_template('index.html', code=submitted_code, connect_success=connect_success)
     code = generate_secret_word(5)
+    
+    connected_clients[client_id] = code
+
+    print("Codes stored in session:", connected_clients)
+
     return render_template('index.html', code=code)
 
+
+@app.before_request
+def before_request():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=10)
+    session.modified = True
+    if 'client_id' not in session:
+        session['client_id'] = str(uuid.uuid4())
+
+
+@app.route('/clear_session')
+def clear_session():
+    session.clear()
+    return 'Session cleared'
 
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
 def register():
