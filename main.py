@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, session
+from flask import Flask, render_template, request, flash, session, jsonify
 from flask_socketio import SocketIO, emit
 from forms import RegistrationForm, LoginForm
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -56,6 +56,8 @@ def decrypt_message(encrypted_message, key):
 connected_clients = {}
 
 # Generate a random code for the handshake
+
+
 def generate_secret_word(length):
     vowels = 'aeiou'
     consonants = 'bcdfghjklmnpqrstvwxyz'
@@ -69,11 +71,13 @@ def generate_secret_word(length):
 
     return secret_word
 
+
 def validate_secret(secret_word):
     for client_id, client_secret in connected_clients.items():
         if client_secret == secret_word:
             return True
-        return False
+    return False
+
 
 @app.route('/', strict_slashes=False, methods=["POST", "GET"])
 @app.route('/home', strict_slashes=False, methods=["POST", "GET"])
@@ -81,19 +85,21 @@ def index():
     client_id = session.get('client_id')
     if request.method == "POST":
         submitted_code = request.form.get("code")
-        connect_success = validate_secret(submitted_code)
-
         connected_clients[client_id] = submitted_code
-        print("Codes stored in session:", connected_clients)
+        print("Codes stored in session[POST]:", connected_clients)
+        return render_template('index.html', submitted_code=submitted_code)
 
-        return render_template('index.html', code=submitted_code, connect_success=connect_success)
     code = generate_secret_word(5)
-    
     connected_clients[client_id] = code
-
-    print("Codes stored in session:", connected_clients)
-
+    print("Codes stored in session[GET]:", connected_clients)
     return render_template('index.html', code=code)
+
+
+@app.route('/validate', strict_slashes=False, methods=["POST", "GET"])
+def validate_code():
+    submitted_code = request.json.get('code')
+    connect_success = validate_secret(submitted_code)
+    return jsonify({'connect_success': connect_success})
 
 
 @app.before_request
@@ -105,10 +111,9 @@ def before_request():
         session['client_id'] = str(uuid.uuid4())
 
 
-@app.route('/clear_session')
-def clear_session():
-    session.clear()
-    return 'Session cleared'
+def clear_dict():
+    connected_clients.clear()
+
 
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
 def register():

@@ -1,24 +1,72 @@
 {% extends 'base.html' %}
 {% block title %} StealthPortal {% endblock title %}
 {% block content %}
-{% if connect_success %}
-<form method="post" class="buttons" id="message-form">
+<form method="post" class="buttons" id="connect-form">
+  <h3>Connect To Device</h3>
+  <p>{{code}}</p>
+  <div class="connect">
+    <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
+    <button type="submit" id="connect-btn">Connect</button>
+  </div>
+</form>
+<form method="post" class="buttons hidden" id="message-form" data-code="">
   <h3>Send Message</h3>
+  <p><span id="code-value">code-input</span></p>
   <div class="connect">
     <input type="text" placeholder="Type your message..." name="message" />
     <button type="submit" name="send">Send</button>
   </div>
 </form>
-{% else %}
-<form method="post" class="buttons" id="connect-form">
-  <h3>Connect To Device</h3>
-  <p>{{code}}</p>
-  <div class="connect">
-    <input type="text" placeholder="Enter Secret Key" name="code" />
-    <button type="submit" name="connect">Connect</button>
-  </div>
-</form>
-{% endif %}
+
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM content loaded");
+    // Hide message-form initially
+    document.getElementById("message-form").classList.add("hidden");
+});
+
+document.getElementById("connect-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent the form from submitting normally
+
+    const codeInput = document.getElementById("code-input").value;
+
+    // Send the code to the backend for validation
+    fetch("/validate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ code: codeInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.connect_success) {
+            // Code is validated, connect to the socket
+            const socket = io({ autoConnect: false });
+            socket.connect();
+
+            // Hide connect-form and show message-form
+            document.getElementById("connect-form").classList.add("hidden");
+            const messageForm = document.getElementById("message-form");
+            messageForm.setAttribute("data-code", codeInput); // Set the code-input value as custom attribute
+            messageForm.classList.remove("hidden");
+
+            // Log the codeInput value
+            const codeInputValue = document.getElementById("code-value");
+            codeInputValue.textContent = '"' + codeInput + '"';
+        } else {
+            // Code is not validated, show an error message
+            document.getElementById("message-box").innerText = "Wrong Code";
+            document.getElementById("message-box").classList.remove("hidden");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        // Handle error if any
+    });
+});
+</script>
 {% endblock content %}
