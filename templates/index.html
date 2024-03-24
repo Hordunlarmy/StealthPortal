@@ -11,7 +11,7 @@
 </form>
 <form method="post" class="buttons hidden" id="message-form" data-code="">
   <h3>Send Message</h3>
-  <p><span id="code-value">code-input</span></p>
+  <p><span id="code-value"></span></p>
   <div class="connect">
     <input type="text" placeholder="Type your message..." name="message" />
     <button type="submit" name="send">Send</button>
@@ -53,14 +53,11 @@ document.getElementById("connect-form").addEventListener("submit", function(even
             const messageForm = document.getElementById("message-form");
             messageForm.setAttribute("data-code", codeInput); // Set the code-input value as custom attribute
             messageForm.classList.remove("hidden");
+            document.getElementById("code-value").textContent = codeInput;
 
-            // Log the codeInput value
-            const codeInputValue = document.getElementById("code-value");
-            codeInputValue.textContent = '"' + codeInput + '"';
         } else {
             // Code is not validated, show an error message
-            document.getElementById("message-box").innerText = "Wrong Code";
-            document.getElementById("message-box").classList.remove("hidden");
+            alert("Wrong Code!!!")
         }
     })
     .catch(error => {

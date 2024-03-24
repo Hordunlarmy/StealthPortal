@@ -16,46 +16,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'c0851757a345207ea1e92661138d847b'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Key derivation function
-
-
-def derive_key(code):
-    salt = b'salt_123'
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        iterations=100000,
-        salt=salt,
-        length=32,
-        backend=default_backend()
-    )
-    key = base64.urlsafe_b64encode(kdf.derive(str(code).encode()))
-    return key
-
-# Encrypt message
-
-
-def encrypt_message(message, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB8(),
-                    backend=default_backend())
-    encryptor = cipher.encryptor()
-    ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
-    return base64.urlsafe_b64encode(ciphertext).decode()
-
-# Decrypt message
-
-
-def decrypt_message(encrypted_message, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB8(),
-                    backend=default_backend())
-    decryptor = cipher.decryptor()
-    ciphertext = base64.urlsafe_b64decode(encrypted_message)
-    decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
-    return decrypted_message.decode()
-
 
 connected_clients = {}
-
-# Generate a random code for the handshake
 
 
 def generate_secret_word(length):
@@ -74,8 +36,9 @@ def generate_secret_word(length):
 
 def validate_secret(secret_word):
     for client_id, client_secret in connected_clients.items():
-        if client_secret == secret_word:
-            return True
+        if connected_clients[session.get('client_id')] == secret_word:
+            return False
+        return True
     return False
 
 
@@ -104,15 +67,10 @@ def validate_code():
 
 @app.before_request
 def before_request():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=10)
-    session.modified = True
     if 'client_id' not in session:
         session['client_id'] = str(uuid.uuid4())
-
-
-def clear_dict():
-    connected_clients.clear()
+    elif session['client_id'] not in connected_clients:
+        session['client_id'] = str(uuid.uuid4())
 
 
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
@@ -139,13 +97,17 @@ def login():
 
 @socketio.on('connect')
 def handle_connect():
-    print(f"Client {request.sid} connected")
+    print(f"Client {session.get('client_id')} connected")
+    connected_clients[session.get('client_id')] = None
+    print("Codes stored in session[AFTER_CONNECT]:", connected_clients)
 
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print(f"Client {request.sid} disconnected")
-    connected_clients.pop(request.sid, None)
+    print(f"Client{ session.get('client_id')} disconnected")
+    if session.get('client_id') in connected_clients:
+        connected_clients.pop(session.get('client_id'))
+    print("Codes stored in session[AFTER_DISCONNECT]:", connected_clients)
 
 
 @socketio.on('handshake')
