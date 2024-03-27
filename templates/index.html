@@ -3,7 +3,7 @@
 {% block content %}
 <form method="post" class="buttons" id="connect-form">
   <h3>Connect To Device</h3>
-  <p>{{code}}</p>
+  <p id='user-code'>{{code}}</p>
   <div class="connect">
     <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
     <button type="submit" id="connect-btn">Connect</button>
@@ -20,49 +20,61 @@
 
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
-
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM content loaded");
+
     // Hide message-form initially
     document.getElementById("message-form").classList.add("hidden");
-});
 
-document.getElementById("connect-form").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent the form from submitting normally
+    let userCode = document.getElementById("user-code").textContent; // Use textContent instead of value
+    const socket = io();
 
-    const codeInput = document.getElementById("code-input").value;
+    // Declare codeInput variable
+    let codeInput;
 
-    // Send the code to the backend for validation
-    fetch("/validate", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ code: codeInput })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.connect_success) {
-            // Code is validated, connect to the socket
-            const socket = io({ autoConnect: false });
-            socket.connect();
+    socket.on('connect', function(data) {
+        socket.emit('handshake', { code: userCode });
+    });
 
+    // Add event listener to connect-form after DOM content is loaded
+    document.getElementById("connect-form").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent the form from submitting normally
+
+        codeInput = document.getElementById("code-input").value; // Set codeInput value
+
+        // Emit event to server with the submitted code
+        socket.emit("user-join", { code: codeInput });
+    });
+
+    // Handle user-join-response event from the server
+    socket.on("user-join-response", function(data) {
+        if (data.status === "Correct") {
             // Hide connect-form and show message-form
             document.getElementById("connect-form").classList.add("hidden");
             const messageForm = document.getElementById("message-form");
             messageForm.setAttribute("data-code", codeInput); // Set the code-input value as custom attribute
             messageForm.classList.remove("hidden");
             document.getElementById("code-value").textContent = codeInput;
-
-        } else {
-            // Code is not validated, show an error message
-            alert("Wrong Code!!!")
+        } else if (data.status === "SelfCode") {
+            alert("Can't Use Your Own Code");
+        } else if (data.status === "Incorrect") {
+            alert("Wrong Code!!!");
         }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        // Handle error if any
+    });
+
+    // Add event listener for message-form submit
+    document.getElementById("message-form").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent the form from submitting normally
+
+        const messageInput = document.getElementById("message-form").querySelector("input[name='message']").value;
+        const code = document.getElementById("message-form").getAttribute("data-code");
+
+        // Send message to the backend
+        socket.emit("send_message", { message: messageInput, code: code });
+
+        // Clear input field
+        document.getElementById("message-form").querySelector("input[name='message']").value = "";
     });
 });
 </script>

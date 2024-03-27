@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, flash, session, jsonify
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, request, flash, session, jsonify, redirect, url_for
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from forms import RegistrationForm, LoginForm
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
@@ -16,8 +16,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'c0851757a345207ea1e92661138d847b'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-
-connected_clients = {}
+rooms = {}
 
 
 def generate_secret_word(length):
@@ -34,43 +33,11 @@ def generate_secret_word(length):
     return secret_word
 
 
-def validate_secret(secret_word):
-    for client_id, client_secret in connected_clients.items():
-        if connected_clients[session.get('client_id')] == secret_word:
-            return False
-        return True
-    return False
-
-
 @app.route('/', strict_slashes=False, methods=["POST", "GET"])
 @app.route('/home', strict_slashes=False, methods=["POST", "GET"])
 def index():
-    client_id = session.get('client_id')
-    if request.method == "POST":
-        submitted_code = request.form.get("code")
-        connected_clients[client_id] = submitted_code
-        print("Codes stored in session[POST]:", connected_clients)
-        return render_template('index.html', submitted_code=submitted_code)
-
     code = generate_secret_word(5)
-    connected_clients[client_id] = code
-    print("Codes stored in session[GET]:", connected_clients)
     return render_template('index.html', code=code)
-
-
-@app.route('/validate', strict_slashes=False, methods=["POST", "GET"])
-def validate_code():
-    submitted_code = request.json.get('code')
-    connect_success = validate_secret(submitted_code)
-    return jsonify({'connect_success': connect_success})
-
-
-@app.before_request
-def before_request():
-    if 'client_id' not in session:
-        session['client_id'] = str(uuid.uuid4())
-    elif session['client_id'] not in connected_clients:
-        session['client_id'] = str(uuid.uuid4())
 
 
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
@@ -78,7 +45,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         flash(f'Account created for {form.username.data}!', 'success')
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))  # Redirect to appropriate route
     return render_template('register.html', form=form)
 
 
@@ -88,7 +55,7 @@ def login():
     if form.validate_on_submit():
         if form.email.data == 'admin@blog.com' and form.password.data == 'password':
             flash('You have been logged in!', 'success')
-            return redirect(url_for('home'))
+            return redirect(url_for('index'))  # Redirect to appropriate route
         else:
             flash('Login Unsuccessful. Please check username and password',
                   'danger')
@@ -98,30 +65,50 @@ def login():
 @socketio.on('connect')
 def handle_connect():
     print(f"Client {session.get('client_id')} connected")
-    connected_clients[session.get('client_id')] = None
-    print("Codes stored in session[AFTER_CONNECT]:", connected_clients)
-
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print(f"Client{ session.get('client_id')} disconnected")
-    if session.get('client_id') in connected_clients:
-        connected_clients.pop(session.get('client_id'))
-    print("Codes stored in session[AFTER_DISCONNECT]:", connected_clients)
 
 
 @socketio.on('handshake')
 def handle_handshake(data):
-    client_id = request.sid
-    client_code = data['client_code']
+    code = data['code']
+    client_id = session.get('client_id')
+    session['code'] = code
+    join_room(code)
+    if client_id not in rooms:
+        rooms[client_id] = {"code": code, "members": 0, "messages": []}
+    rooms[client_id]["members"] += 1
+    print("Room Content: ", rooms)
 
-    # Derive a key from the numeric code
-    key = derive_key(client_code)
 
-    # Store the key for the client
-    connected_clients[client_id] = key
+@socketio.on('user-join')
+def handle_user_join(data):
+    room_code = data['code']
+    all_code = []
+    for room_id, room_data in rooms.items():
+        all_code.append(room_data['code'])
 
-    emit('handshake_success', {'message': 'Handshake successful'})
+    if room_code in all_code:
+        if room_code == session.get('code'):
+            emit('user-join-response', {"status": "SelfCode"})
+        else:
+            join_room(room_code)
+            for room_id, room_data in rooms.items():
+                if room_code == room_data["code"]:
+                    room_data["members"] += 1
+            emit('user-join-response',
+                 {"status": "Correct"}, room=room_code)
+    else:
+        emit('user-join-response', {"status": "Incorrect"})
+
+
+@socketio.on('disconnect')
+def handle_disconnect(data):
+    client_id = session.get('client_id')
+    print(f"Client {client_id} Disconnected")
+    if client_id in rooms:
+        rooms.pop(client_id)
+        print("Room content [AFTER_DISCONNECT]:", rooms)
+    else:
+        print(f"Attempted to disconnect unknown client: {client_id}")
 
 
 @socketio.on('send_message')
