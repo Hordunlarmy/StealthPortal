@@ -19,6 +19,14 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 rooms = {}
 
 
+@app.before_request
+def before_request():
+    if 'client_id' not in session:
+        session['client_id'] = str(uuid.uuid4())
+    elif session['client_id'] not in rooms:
+        session['client_id'] = str(uuid.uuid4())
+
+
 def generate_secret_word(length):
     vowels = 'aeiou'
     consonants = 'bcdfghjklmnpqrstvwxyz'
@@ -40,6 +48,12 @@ def index():
     return render_template('index.html', code=code)
 
 
+@app.route('/clear_session')
+def clear_session():
+    session.clear()
+    return redirect(url_for('index'))
+
+
 @app.route('/register', strict_slashes=False, methods=["POST", "GET"])
 def register():
     form = RegistrationForm()
@@ -51,6 +65,7 @@ def register():
 
 @app.route('/login', strict_slashes=False, methods=["POST", "GET"])
 def login():
+    session.clear()
     form = LoginForm()
     if form.validate_on_submit():
         if form.email.data == 'admin@blog.com' and form.password.data == 'password':
@@ -91,6 +106,7 @@ def handle_user_join(data):
             emit('user-join-response', {"status": "SelfCode"})
         else:
             join_room(room_code)
+            rooms[session.get('client_id')]['code'] = None
             for room_id, room_data in rooms.items():
                 if room_code == room_data["code"]:
                     room_data["members"] += 1
@@ -101,7 +117,7 @@ def handle_user_join(data):
 
 
 @socketio.on('disconnect')
-def handle_disconnect(data):
+def handle_disconnect():
     client_id = session.get('client_id')
     print(f"Client {client_id} Disconnected")
     if client_id in rooms:
@@ -109,6 +125,26 @@ def handle_disconnect(data):
         print("Room content [AFTER_DISCONNECT]:", rooms)
     else:
         print(f"Attempted to disconnect unknown client: {client_id}")
+
+
+@socketio.on('user-left')
+def handle_user_left(data):
+    room_code = data['code']
+    client_id = session.get('client_id')
+    print("room code: ", room_code)
+    leave_room(room_code)
+
+    # Clear session only if the user leaving is the creator
+    if rooms[client_id] == client_id:
+        emit('disconnect', {"members": 1}, room=room_code)
+
+    for room_id, room_data in rooms.items():
+        if room_code == room_data["code"]:
+            room_data["members"] -= 1
+            if room_data["members"] <= 1:
+                emit('disconnect', {"members": 1}, room=room_code)
+            elif room_data["members"] >= 2:
+                emit('disconnect', {"members": 2}, room=room_code)
 
 
 @socketio.on('send_message')

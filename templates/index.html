@@ -62,6 +62,17 @@
             alert("Wrong Code!!!");
         }
     });
+    let roomCode = document.getElementById('code-value').textContent;
+    socket.on("disconnect", function(data) {
+        socket.emit("user-left", { code: roomCode });
+
+        if (data.members <= 1) {
+            location.reload();
+        } else if (data.members >= 2) {
+            location.reload();
+        }
+    });
+
 
     // Add event listener for message-form submit
     document.getElementById("message-form").addEventListener("submit", function(event) {
