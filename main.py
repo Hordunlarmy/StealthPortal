@@ -106,7 +106,7 @@ def handle_user_join(data):
             emit('user-join-response', {"status": "SelfCode"})
         else:
             join_room(room_code)
-            rooms[session.get('client_id')]['code'] = None
+            rooms[session.get('client_id')]['code'] = room_code
             for room_id, room_data in rooms.items():
                 if room_code == room_data["code"]:
                     room_data["members"] += 1
@@ -115,36 +115,27 @@ def handle_user_join(data):
     else:
         emit('user-join-response', {"status": "Incorrect"})
 
+    print("Room Content[AFTER JOIN ROOM]: ", rooms)
+
 
 @socketio.on('disconnect')
 def handle_disconnect():
     client_id = session.get('client_id')
-    print(f"Client {client_id} Disconnected")
+    room_code = rooms[client_id]['code']
     if client_id in rooms:
+        leave_room(room_code)
         rooms.pop(client_id)
-        print("Room content [AFTER_DISCONNECT]:", rooms)
+        print(f"Client {client_id} Disconnected")
+        print("Room content [USERS REMAINING]:", rooms)
     else:
         print(f"Attempted to disconnect unknown client: {client_id}")
-
-
-@socketio.on('user-left')
-def handle_user_left(data):
-    room_code = data['code']
-    client_id = session.get('client_id')
-    print("room code: ", room_code)
-    leave_room(room_code)
-
-    # Clear session only if the user leaving is the creator
-    if rooms[client_id] == client_id:
-        emit('disconnect', {"members": 1}, room=room_code)
 
     for room_id, room_data in rooms.items():
         if room_code == room_data["code"]:
             room_data["members"] -= 1
             if room_data["members"] <= 1:
-                emit('disconnect', {"members": 1}, room=room_code)
-            elif room_data["members"] >= 2:
-                emit('disconnect', {"members": 2}, room=room_code)
+                emit('user-left-response',
+                     {"members": "Reset"}, room=room_code)
 
 
 @socketio.on('send_message')

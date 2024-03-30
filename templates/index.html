@@ -51,28 +51,24 @@
     socket.on("user-join-response", function(data) {
         if (data.status === "Correct") {
             // Hide connect-form and show message-form
+            document.getElementById("code-value").textContent = codeInput;
             document.getElementById("connect-form").classList.add("hidden");
             const messageForm = document.getElementById("message-form");
             messageForm.setAttribute("data-code", codeInput); // Set the code-input value as custom attribute
             messageForm.classList.remove("hidden");
-            document.getElementById("code-value").textContent = codeInput;
         } else if (data.status === "SelfCode") {
             alert("Can't Use Your Own Code");
         } else if (data.status === "Incorrect") {
             alert("Wrong Code!!!");
         }
     });
-    let roomCode = document.getElementById('code-value').textContent;
-    socket.on("disconnect", function(data) {
-        socket.emit("user-left", { code: roomCode });
 
-        if (data.members <= 1) {
+    socket.on("user-left-response", function(data) {
+        if (data.members === "Reset") {
             location.reload();
-        } else if (data.members >= 2) {
-            location.reload();
+            alert("You are the only one left. Portal Closed.");
         }
     });
-
 
     // Add event listener for message-form submit
     document.getElementById("message-form").addEventListener("submit", function(event) {
