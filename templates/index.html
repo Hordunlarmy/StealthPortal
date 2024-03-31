@@ -13,13 +13,17 @@
   <h3>Send Message</h3>
   <p><span id="code-value"></span></p>
   <div class="connect">
-    <input type="text" placeholder="Type your message..." name="message" />
+    <input type="text" placeholder="Type your message..." name="message" id="message-input" />
     <button type="submit" name="send">Send</button>
   </div>
 </form>
+</br>
 
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
+<div style="clear:both;"></div>
+
+</br>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM content loaded");
@@ -50,12 +54,11 @@
     // Handle user-join-response event from the server
     socket.on("user-join-response", function(data) {
         if (data.status === "Correct") {
+            let room_code = data.room_code
             // Hide connect-form and show message-form
-            document.getElementById("code-value").textContent = codeInput;
+            document.getElementById("code-value").textContent = room_code;
             document.getElementById("connect-form").classList.add("hidden");
-            const messageForm = document.getElementById("message-form");
-            messageForm.setAttribute("data-code", codeInput); // Set the code-input value as custom attribute
-            messageForm.classList.remove("hidden");
+            document.getElementById("message-form").classList.remove("hidden");
         } else if (data.status === "SelfCode") {
             alert("Can't Use Your Own Code");
         } else if (data.status === "Incorrect") {
@@ -74,15 +77,37 @@
     document.getElementById("message-form").addEventListener("submit", function(event) {
         event.preventDefault(); // Prevent the form from submitting normally
 
-        const messageInput = document.getElementById("message-form").querySelector("input[name='message']").value;
-        const code = document.getElementById("message-form").getAttribute("data-code");
+        const sendMessage = () => {
+            const code = document.getElementById("message-form").getAttribute("data-code");
+            const message = document.getElementById("message-input");
+            if (message.value == "") return;
+            var publicKey = forge.pki.publicKeyFromPem('-----BEGIN PUBLIC KEY-----\n'+
+                'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/EqD04Y7XKJleTYDL9N7noeU2\n'+
+                'q4fF0h9d1/8W25pZwFi+yhXWAsH/If8J02M5EuEdvI/y7dqa8f0EyQ3ceuRmIs7q\n'+
+                '5SkDfueh3DgiEfJm2edYG5+k28klJCplZ7BwApkZgJZTBHPHt67yoHtcjFpbkpAF\n'+
+                'fKCRwqLOCVT8+czrWwIDAQAB\n'+
+                '-----END PUBLIC KEY-----');
 
-        // Send message to the backend
-        socket.emit("send_message", { message: messageInput, code: code });
+            var encryptedMessage = publicKey.encrypt(message.value, "RSA-OAEP", {
+                md: forge.md.sha256.create(),
+                mgf1: forge.mgf1.create()
+            });
+            var base64 = forge.util.encode64(encryptedMessage);
+            socket.emit("send_message", { message: base64, code: code });
+            message.value = "";
+        };
 
-        // Clear input field
-        document.getElementById("message-form").querySelector("input[name='message']").value = "";
+        sendMessage();
+
     });
+
+    socket.on("receive_message", function(data) {
+        // Unhide the message box
+        document.getElementById("message-box").classList.remove("hidden");
+        // Append the received message to the message box
+        document.getElementById("message-box").innerHTML += "<p>" + data.message + "</p>";
+    });
+
 });
 </script>
 {% endblock content %}
