@@ -17,13 +17,12 @@
     <button type="submit" name="send">Send</button>
   </div>
 </form>
-</br>
+<br/>
 
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
 <div style="clear:both;"></div>
 
-</br>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM content loaded");
@@ -79,8 +78,19 @@
 
         const sendMessage = () => {
             const code = document.getElementById("message-form").getAttribute("data-code");
-            const message = document.getElementById("message-input");
-            if (message.value == "") return;
+            const message = document.getElementById("message-input").value.trim();
+            if (message === "") return;
+
+            var secretKey = generateRandomNumber(32);
+            var aesKey = CryptoJS.enc.Base64.parse(secretKey);
+            var iv = CryptoJS.enc.Utf8.parse("1020304050607080");
+            var encryptionOptions = {
+                iv: iv,
+                mode: CryptoJS.mode.CBC
+            };
+            var encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, encryptionOptions).toString();
+            console.log(aesKey);
+            console.log("Encrypted Message: ", encryptedMessage)
             var publicKey = forge.pki.publicKeyFromPem('-----BEGIN PUBLIC KEY-----\n'+
                 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/EqD04Y7XKJleTYDL9N7noeU2\n'+
                 'q4fF0h9d1/8W25pZwFi+yhXWAsH/If8J02M5EuEdvI/y7dqa8f0EyQ3ceuRmIs7q\n'+
@@ -88,12 +98,13 @@
                 'fKCRwqLOCVT8+czrWwIDAQAB\n'+
                 '-----END PUBLIC KEY-----');
 
-            var encryptedMessage = publicKey.encrypt(message.value, "RSA-OAEP", {
+            var encryptedKey = publicKey.encrypt(secretKey, "RSA-OAEP", {
                 md: forge.md.sha256.create(),
                 mgf1: forge.mgf1.create()
             });
-            var base64 = forge.util.encode64(encryptedMessage);
-            socket.emit("send_message", { message: base64, code: code });
+            var base64 = forge.util.encode64(encryptedKey);
+            console.log("Encrypted Key: ", base64)
+            socket.emit("send_message", { message: encryptedMessage, key: base64, code: code });
             message.value = "";
         };
 
@@ -108,6 +119,17 @@
         document.getElementById("message-box").innerHTML += "<p>" + data.message + "</p>";
     });
 
+
 });
+
+function generateRandomNumber(length) {
+    var result = '';
+    var characters = '0123456789abcdef';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
 </script>
 {% endblock content %}
