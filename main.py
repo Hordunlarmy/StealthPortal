@@ -63,9 +63,10 @@ def decrypt_key(encrypted_key):
         return None
 
 
-def decrypt_message(data: str, key: str) -> str:
+def decrypt_message(data: str, key: str, passedIv: str) -> str:
     secret_key = key
-    iv = "1020304050607080"
+    iv = passedIv
+    print(iv)
     ciphertext = b64decode(data)
     derived_key = b64decode(secret_key)
     cipher = AES.new(derived_key, AES.MODE_CBC, iv.encode('utf-8'))
@@ -166,11 +167,12 @@ def handle_send_message(data):
         return
     encrypted_message = data["message"]
     encrypted_key = data["key"]
+    iv = data["iv"]
     print(f"[ENCRYPTED] key is {encrypted_key}")
     print(f"[ENCRYPTED] {client_id} said: {data['message']}")
     print(f"[ENCRYPTED] message type is ... {type(encrypted_message)}")
     decrypted_key = decrypt_key(encrypted_key)
-    decrypted_message = decrypt_message(encrypted_message, decrypted_key)
+    decrypted_message = decrypt_message(encrypted_message, decrypted_key, iv)
     emit('receive_message', {'message': decrypted_message}, room=room)
     print(f"[DECRYPTED] {client_id} said: {decrypted_message}")
 
