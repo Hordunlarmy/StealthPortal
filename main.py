@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, flash, session, jsonify, redirect, url_for
+from flask import (Flask, render_template, request, flash,
+                   session, jsonify, redirect, url_for)
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from forms import RegistrationForm, LoginForm
 from Crypto.Cipher import PKCS1_OAEP
@@ -7,11 +8,7 @@ from Crypto.Hash import SHA256
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 from base64 import b64decode
-from datetime import timedelta
 import uuid
-import os
-import base64
-import json
 import random
 
 app = Flask(__name__)
@@ -33,9 +30,6 @@ def load_private_key():
     try:
         with open('privatekey.pem', 'r') as file:
             key_contents = file.read()
-            print("Private key contents:")
-            print(key_contents)
-
             private_key = RSA.import_key(key_contents)
             return private_key
     except FileNotFoundError:
@@ -56,7 +50,6 @@ def decrypt_key(encrypted_key):
         decrypted_key_bytes = cipher.decrypt(b64decode(encrypted_key))
         decrypted_key_str = decrypted_key_bytes.decode(
             'utf-8')
-        print("The decrypted key-----------", decrypted_key_str)
         return decrypted_key_str
     except Exception as e:
         print("Error decrypting key:", e)
@@ -66,7 +59,6 @@ def decrypt_key(encrypted_key):
 def decrypt_message(data: str, key: str, passedIv: str) -> str:
     secret_key = key
     iv = passedIv
-    print(iv)
     ciphertext = b64decode(data)
     derived_key = b64decode(secret_key)
     cipher = AES.new(derived_key, AES.MODE_CBC, iv.encode('utf-8'))
@@ -109,7 +101,8 @@ def login():
     session.clear()
     form = LoginForm()
     if form.validate_on_submit():
-        if form.email.data == 'admin@blog.com' and form.password.data == 'password':
+        if (form.email.data == 'admin@blog.com'
+                and form.password.data == 'password'):
             flash('You have been logged in!', 'success')
             return redirect(url_for('index'))  # Redirect to appropriate route
         else:
@@ -130,8 +123,7 @@ def handle_handshake(data):
     session['code'] = code
     join_room(code)
     if client_id not in rooms:
-        rooms[client_id] = {"code": code, "members": 0}
-    rooms[client_id]["members"] += 1
+        rooms[client_id] = {"code": code, "members": 1}
     print("Room Content: ", rooms)
 
 
@@ -148,9 +140,13 @@ def handle_user_join(data):
         else:
             join_room(room_code)
             rooms[session.get('client_id')]['code'] = room_code
+            room_member_count = sum(
+                1 for room_data in rooms.values()
+                if room_data["code"] == room_code
+            )
             for room_id, room_data in rooms.items():
                 if room_code == room_data["code"]:
-                    room_data["members"] += 1
+                    room_data["members"] = room_member_count
             emit('user-join-response',
                  {"status": "Correct", "room_code": room_code}, room=room_code)
     else:
@@ -162,25 +158,27 @@ def handle_user_join(data):
 @socketio.on('send_message')
 def handle_send_message(data):
     client_id = session.get("client_id")
-    room = data["code"]
     if client_id not in rooms:
         return
+
+    sender_room = rooms[client_id]['code']
     encrypted_message = data["message"]
     encrypted_key = data["key"]
     iv = data["iv"]
-    print(f"[ENCRYPTED] key is {encrypted_key}")
-    print(f"[ENCRYPTED] {client_id} said: {data['message']}")
-    print(f"[ENCRYPTED] message type is ... {type(encrypted_message)}")
     decrypted_key = decrypt_key(encrypted_key)
     decrypted_message = decrypt_message(encrypted_message, decrypted_key, iv)
-    emit('receive_message', {'message': decrypted_message}, room=room)
-    print(f"[DECRYPTED] {client_id} said: {decrypted_message}")
+    emit('receive_message', {'message': decrypted_message}, room=sender_room)
+    print(
+        f"[DECRYPTED] {client_id} said: "
+        f"{decrypted_message} in room {sender_room}"
+    )
 
 
 @socketio.on('disconnect')
 def handle_disconnect():
     client_id = session.get('client_id')
     room_code = rooms[client_id]['code']
+    counter_decremented = False
     if client_id in rooms:
         leave_room(room_code)
         rooms.pop(client_id)

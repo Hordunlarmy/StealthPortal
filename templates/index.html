@@ -77,14 +77,13 @@
         event.preventDefault(); // Prevent the form from submitting normally
 
         const sendMessage = () => {
-            const code = document.getElementById("message-form").getAttribute("data-code");
             const message = document.getElementById("message-input").value.trim();
             if (message === "") return;
 
             var secretKey = generateRandomNumber(32);
             var aesKey = CryptoJS.enc.Base64.parse(secretKey);
-            var ivGen = "1020304050607080";  // refacore to generate 16 random numbers
-            console.log(ivGen);
+            var ivGen = Array.from({length: 16}, () => Math.floor(Math.random() * 10)).join('');
+            console.log("ivGen",ivGen);
             var iv = CryptoJS.enc.Utf8.parse(ivGen);
             var encryptionOptions = {
                 iv: iv,
@@ -106,7 +105,7 @@
             });
             var base64 = forge.util.encode64(encryptedKey);
             console.log("Encrypted Key: ", base64)
-            socket.emit("send_message", { message: encryptedMessage, key: base64, iv: ivGen, code: code });
+            socket.emit("send_message", { message: encryptedMessage, key: base64, iv: ivGen});
             message.value = "";
         };
 
