@@ -1,19 +1,15 @@
 from flask import (Flask, render_template, request, flash,
                    session, jsonify, redirect, url_for)
+from crypto import load_private_key, decrypt_key, decrypt_message
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from forms import RegistrationForm, LoginForm
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA256
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import unpad
-from base64 import b64decode
+from crypto import generate_secret_word
 import uuid
-import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'c0851757a345207ea1e92661138d847b'
 socketio = SocketIO(app, cors_allowed_origins="*")
+
 
 rooms = {}
 
@@ -24,60 +20,6 @@ def before_request():
         session['client_id'] = str(uuid.uuid4())
     elif session['client_id'] not in rooms:
         session['client_id'] = str(uuid.uuid4())
-
-
-def load_private_key():
-    try:
-        with open('privatekey.pem', 'r') as file:
-            key_contents = file.read()
-            private_key = RSA.import_key(key_contents)
-            return private_key
-    except FileNotFoundError:
-        print("Private key file not found!")
-        return None
-    except ValueError as e:
-        print("Error loading private key:", e)
-        return None
-
-
-def decrypt_key(encrypted_key):
-    try:
-        private_key = load_private_key()
-        if private_key is None:
-            return None
-
-        cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA256)
-        decrypted_key_bytes = cipher.decrypt(b64decode(encrypted_key))
-        decrypted_key_str = decrypted_key_bytes.decode(
-            'utf-8')
-        return decrypted_key_str
-    except Exception as e:
-        print("Error decrypting key:", e)
-        return None
-
-
-def decrypt_message(data: str, key: str, passedIv: str) -> str:
-    secret_key = key
-    iv = passedIv
-    ciphertext = b64decode(data)
-    derived_key = b64decode(secret_key)
-    cipher = AES.new(derived_key, AES.MODE_CBC, iv.encode('utf-8'))
-    decrypted_data = cipher.decrypt(ciphertext)
-    return unpad(decrypted_data, 16).decode("utf-8")
-
-
-def generate_secret_word(length):
-    vowels = 'aeiou'
-    consonants = 'bcdfghjklmnpqrstvwxyz'
-    secret_word = ''
-
-    for i in range(length):
-        if i % 2 == 0:
-            secret_word += random.choice(consonants)
-        else:
-            secret_word += random.choice(vowels)
-
-    return secret_word
 
 
 @app.route('/', strict_slashes=False, methods=["POST", "GET"])
@@ -96,17 +38,17 @@ def register():
     return render_template('register.html', form=form)
 
 
-@app.route('/login', strict_slashes=False, methods=["POST", "GET"])
+@app.route('/login', strict_slashes=False, methods=["post", "get"])
 def login():
     session.clear()
-    form = LoginForm()
+    form = loginform()
     if form.validate_on_submit():
         if (form.email.data == 'admin@blog.com'
                 and form.password.data == 'password'):
-            flash('You have been logged in!', 'success')
-            return redirect(url_for('index'))  # Redirect to appropriate route
+            flash('you have been logged in!', 'success')
+            return redirect(url_for('index'))  # redirect to appropriate route
         else:
-            flash('Login Unsuccessful. Please check username and password',
+            flash('login unsuccessful. please check username and password',
                   'danger')
     return render_template('login.html', form=form)
 
