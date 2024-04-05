@@ -1,0 +1,8 @@
+Flask
+flask_socketio
+pycryptodome
+flask_bcrypt
+flask_sqlalchemy
+flask_login
+flask_wtf
+

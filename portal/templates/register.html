@@ -5,7 +5,13 @@
   <form method="POST" action="">
     {{ form.hidden_tag() }}
     <fieldset class="form-group">
-      <legend class="border-bottom mb-4">Join Today</legend>
+        <div class="logo">
+            <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="">
+        </div>
+        <div class="text-center mt-4 name">
+            Join Today
+        </div>
+
       <div class="form-group">
         {{ form.username.label(class="form-control-label") }}
         {% if form.username.errors %}

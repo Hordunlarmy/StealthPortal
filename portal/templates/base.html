@@ -11,9 +11,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" integrity="sha512-a+SUDuwNzXDvz4XrIcXHuCf089/iJAoN4lmrXJg18XnduKK6YlDHNRalv4yd1N40OKI80tFidF+rqTFKGPoWFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   </head>
   <header class="site-header">
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">StealthPortal</a>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <div class="logo">
+                <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="Logo" width="30" height="24" class="d-inline-block align-text-top">
+            </div>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -36,15 +38,20 @@
             Persistent Access
           </a>
           <ul class="dropdown-menu">
+            {% if current_user.is_authenticated %}
+            <li><a class="dropdown-item" href={{ url_for('main.profile') }}>Profile</a></li>
+            <li><a class="dropdown-item" href={{ url_for('main.logout') }}>Logout</a></li>
+            {% else %}
             <li><a class="dropdown-item" href={{ url_for('main.login') }}>Login</a></li>
             <li><a class="dropdown-item" href={{ url_for('main.register') }}>Register</a></li>
+            {% endif %}
           </ul>
         </div>
       </div>
     </nav>
   </header>
   <body>
-    <div class="content">
+    <div class="wrapper">
       {% block content %} {% endblock %}
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>

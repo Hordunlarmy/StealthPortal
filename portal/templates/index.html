@@ -1,21 +1,33 @@
 {% extends 'base.html' %}
 {% block title %} StealthPortal {% endblock title %}
 {% block content %}
-<form method="post" class="buttons" id="connect-form">
-  <h3>Connect To Device</h3>
-  <p id='user-code'>{{code}}</p>
-  <div class="connect">
+<form method="post" class="p-2 mt-2"  id="connect-form">
+    <div class="logo">
+        <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="">
+    </div>
+    <div class="text-center mt-4 name">
+        Connect To Device
+    </div>
+  <p id='user-code' align="center">{{code}}</p>
+  <div class="form-field d-flex align-items-center">
+    <span class="fas fa-key"></span>
     <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
-    <button type="submit" id="connect-btn">Connect</button>
   </div>
+    <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
 </form>
-<form method="post" class="buttons hidden" id="message-form" data-code="">
-  <h3>Send Message</h3>
-  <p><span id="code-value"></span></p>
-  <div class="connect">
+
+<form method="post" class="p-3 mt-3" id="message-form" data-code="">
+    <div class="logo">
+        <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="">
+    </div>
+    <div class="text-center mt-4 name">
+        Send Message
+    </div>
+  <p><span id="code-value" align="center"></span></p>
+  <div class="form-field d-flex align-items-center">
     <input type="text" placeholder="Type your message..." name="message" id="message-input" />
-    <button type="submit" name="send">Send</button>
   </div>
+    <button class="btn mt-3" type="submit" name="send">Send</button>
 </form>
 <br/>
 

@@ -4,6 +4,8 @@ from datetime import datetime
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+login_manager.login_view = 'main.login'
+login_manager.login_messsage_category = 'info'
 
 
 @login_manager.user_loader
@@ -15,8 +17,6 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False,
-                           default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     messages = db.relationship('Message', backref='sender', lazy=True)
 
