@@ -4,6 +4,7 @@ from .routes import main, bcrypt
 from .engine.db_storage import db, login_manager
 
 rooms = {}
+authenticated_in_room = {}
 
 
 def create_app():

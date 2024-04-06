@@ -40,6 +40,7 @@
           <ul class="dropdown-menu">
             {% if current_user.is_authenticated %}
             <li><a class="dropdown-item" href={{ url_for('main.profile') }}>Profile</a></li>
+            <li><a class="dropdown-item" href={{ url_for('main.history') }}>History</a></li>
             <li><a class="dropdown-item" href={{ url_for('main.logout') }}>Logout</a></li>
             {% else %}
             <li><a class="dropdown-item" href={{ url_for('main.login') }}>Login</a></li>

@@ -23,7 +23,7 @@
     <div class="text-center mt-4 name">
         Send Message
     </div>
-  <p><span id="code-value" align="center"></span></p>
+  <p id="code-value" align="center"></p>
   <div class="form-field d-flex align-items-center">
     <input type="text" placeholder="Type your message..." name="message" id="message-input" />
   </div>
@@ -95,6 +95,7 @@
             var secretKey = generateRandomNumber(32);
             var aesKey = CryptoJS.enc.Base64.parse(secretKey);
             var ivGen = Array.from({length: 16}, () => Math.floor(Math.random() * 10)).join('');
+            console.log("secretKey",secretKey);
             console.log("ivGen",ivGen);
             var iv = CryptoJS.enc.Utf8.parse(ivGen);
             var encryptionOptions = {
@@ -116,8 +117,10 @@
                 mgf1: forge.mgf1.create()
             });
             var base64 = forge.util.encode64(encryptedKey);
+            code = document.getElementById("code-value").textContent
+            console.log("Code: ", code)
             console.log("Encrypted Key: ", base64)
-            socket.emit("send_message", { message: encryptedMessage, key: base64, iv: ivGen});
+            socket.emit("send_message", { message: encryptedMessage, key: base64, iv: ivGen, code: code});
             message.value = "";
         };
 

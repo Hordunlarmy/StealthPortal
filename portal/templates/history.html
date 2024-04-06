@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %} StealthPortal- {{title}} {% endblock title %}
+{% block content %}
+
+<div class="logo">
+    <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="">
+</div>
+<div class="text-center mt-4 name">
+    History
+</div>
+
+<div id="message-box">
+    {% for message in messages %}
+        {{message}}
+    {% endfor %}
+</div>
+
+{% endblock content %}

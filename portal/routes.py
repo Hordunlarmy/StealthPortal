@@ -23,6 +23,12 @@ def before_request():
 @main.route('/', strict_slashes=False, methods=["POST", "GET"])
 @main.route('/home', strict_slashes=False, methods=["POST", "GET"])
 def index():
+    if current_user.is_authenticated:
+        authenticated = True
+        print(f"---- {session.get('client_id')} is Authenticated----")
+    else:
+        authenticated = False
+        print(f"----{session.get('client_id')} is not Authenticated----")
     code = generate_secret_word(5)
     return render_template('index.html', code=code)
 
@@ -73,6 +79,7 @@ def logout():
 @main.route('/profile', strict_slashes=False, methods=["POST", "GET"])
 @login_required
 def profile():
+    from portal import db
     form = UpdateProfileForm()
     if form.validate_on_submit():
         current_user.username = form.username.data
@@ -84,3 +91,15 @@ def profile():
         form.username.data = current_user.username
         form.email.data = current_user.email
     return render_template('profile.html', title='Profile', form=form)
+
+
+@main.route('/history', strict_slashes=False, methods=["POST", "GET"])
+@login_required
+def history():
+    user_id = current_user.id
+    messages = Message.query.filter_by(user_id=user_id).all()
+    encrypted_messages = []
+    print("-----HISTORY-----", messages)
+    for message in messages:
+        encrypted_messages.append(message.message)
+    return render_template('history.html', title='History', messages=encrypted_messages)
