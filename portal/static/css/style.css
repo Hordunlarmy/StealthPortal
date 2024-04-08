@@ -107,3 +107,24 @@ body {
 .hidden {
     display: none;
 }
+
+.scrollable {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#code-input::placeholder {
+        text-align: center;
+    }
+
+.sender-message {
+    text-align: right;
+    background-color: #DCF8C6; /* Green background for sender messages */
+    /* Add other styling as needed */
+}
+
+.receiver-message {
+    text-align: left;
+    background-color: #F0F0F0; /* Grey background for receiver messages */
+    /* Add other styling as needed */
+}

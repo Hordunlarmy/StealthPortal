@@ -4,7 +4,7 @@ from flask_login import (login_user, current_user, logout_user, login_required)
 from flask_bcrypt import Bcrypt
 from .engine.db_storage import User, Message, load_user
 from .forms import RegistrationForm, LoginForm, UpdateProfileForm
-from .crypto import generate_secret_word
+from .crypto import generate_secret_word, decrypt_key, decrypt_message
 import portal
 import uuid
 
@@ -98,8 +98,10 @@ def profile():
 def history():
     user_id = current_user.id
     messages = Message.query.filter_by(user_id=user_id).all()
-    encrypted_messages = []
-    print("-----HISTORY-----", messages)
+    user_messages = []
     for message in messages:
-        encrypted_messages.append(message.message)
-    return render_template('history.html', title='History', messages=encrypted_messages)
+        decrypted_key = decrypt_key(message.key)
+        decrypted_message = decrypt_message(
+            message.message, decrypted_key, message.iv)
+        user_messages.append(decrypted_message)
+    return render_template('history.html', title='History', messages=user_messages)

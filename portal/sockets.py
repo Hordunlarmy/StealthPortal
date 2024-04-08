@@ -70,10 +70,12 @@ def handle_user_join(data):
 def handle_send_message(data):
     from portal import db
     code = data["code"]
+    sender = 'receiver'
     client_id = session.get("client_id")
     if client_id not in portal.rooms:
         return
-
+    if client_id == client_id:
+        sender = 'sender'
     sender_room = portal.rooms[client_id]['code']
     encrypted_message = data["message"]
     encrypted_key = data["key"]
@@ -89,7 +91,8 @@ def handle_send_message(data):
                 db.session.commit()
     decrypted_key = decrypt_key(encrypted_key)
     decrypted_message = decrypt_message(encrypted_message, decrypted_key, iv)
-    emit('receive_message', {'message': decrypted_message}, room=sender_room)
+    emit('receive_message', {
+         'message': decrypted_message, 'sender': sender}, room=sender_room)
     print(
         f"[DECRYPTED] {client_id} said: "
         f"{decrypted_message} in room {sender_room}"

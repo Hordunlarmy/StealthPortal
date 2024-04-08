@@ -13,6 +13,10 @@
     <span class="fas fa-key"></span>
     <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
   </div>
+  <div id="qrcode" align="center"></div>
+   <div id="reader" style="width: 500px;"></div>
+    <button type="button" id="scan-btn">Scan QR</button>
+
     <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
 </form>
 
@@ -43,6 +47,34 @@
     document.getElementById("message-form").classList.add("hidden");
 
     let userCode = document.getElementById("user-code").textContent; // Use textContent instead of value
+
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+            text: userCode,
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+
+    const html5Qrcode = new Html5Qrcode('reader');
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        if (decodedText) {
+            console.log(decodedText);
+            html5Qrcode.stop();
+            document.getElementById("code-input").value = decodedText; // Set the decoded text to code input field
+        }
+    };
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    // Function to start QR code scanning
+    const startQRScan = () => {
+        html5Qrcode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+    };
+
+    // Add event listener to the button
+    document.getElementById("scan-btn").addEventListener("click", startQRScan);
     const socket = io();
 
     // Declare codeInput variable
@@ -131,10 +163,15 @@
     socket.on("receive_message", function(data) {
         // Unhide the message box
         document.getElementById("message-box").classList.remove("hidden");
-        // Append the received message to the message box
-        document.getElementById("message-box").innerHTML += "<p>" + data.message + "</p>";
-    });
+        document.getElementById("message-box").classList.add("scrollable");
 
+        // Determine the class based on sender or receiver
+        var messageClass = data.sender === 'sender' ? 'sender-message' : 'receiver-message';
+
+        // Append the received message to the message box with appropriate styling
+        var messageElement = "<p class='" + messageClass + "'>" + data.message + "</p>";
+        document.getElementById("message-box").innerHTML += messageElement;
+    });
 
 });
 
