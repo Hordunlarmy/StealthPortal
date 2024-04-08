@@ -117,14 +117,48 @@ body {
         text-align: center;
     }
 
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    display: none; /* Hide the overlay by default */
+    z-index: 999; /* Ensure overlay is on top */
+}
+
+.reader-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 1000; /* Ensure scanner is on top of other elements */
+}
+
+#reader {
+    width: 500px; /* Ensure the scanner takes up the full width of its container */
+}
+
 .sender-message {
-    text-align: right;
+    color: #000; /* Black text color */
     background-color: #DCF8C6; /* Green background for sender messages */
-    /* Add other styling as needed */
+    border-radius: 15px;
+    padding: 10px;
+    margin: 5px;
+    clear: both; /* Clear floats */
+    float: right; /* Float the sender messages to the right */
 }
 
 .receiver-message {
-    text-align: left;
-    background-color: #F0F0F0; /* Grey background for receiver messages */
-    /* Add other styling as needed */
+    color: #000; /* Black text color */
+    background-color: #ADD8E6; /* Light blue background for receiver messages */
+    border-radius: 15px;
+    padding: 10px;
+    margin: 5px;
+    clear: both; /* Clear floats */
+    float: left; /* Float the receiver messages to the left */
 }

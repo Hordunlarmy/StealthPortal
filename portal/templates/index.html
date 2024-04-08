@@ -13,11 +13,16 @@
     <span class="fas fa-key"></span>
     <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
   </div>
+  </br>
   <div id="qrcode" align="center"></div>
-   <div id="reader" style="width: 500px;"></div>
-    <button type="button" id="scan-btn">Scan QR</button>
-
-    <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
+  <div id="overlay" class="overlay">
+    <div id="reader-container" class="reader-container">
+        <div id="reader"></div>
+    </div>
+  </div>
+  </br>
+   <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
+    <button class="btn mt-3"  type="button" id="scan-btn">Scan QR</button>
 </form>
 
 <form method="post" class="p-3 mt-3" id="message-form" data-code="">
@@ -59,22 +64,53 @@
 
 
     const html5Qrcode = new Html5Qrcode('reader');
-    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        if (decodedText) {
-            console.log(decodedText);
-            html5Qrcode.stop();
-            document.getElementById("code-input").value = decodedText; // Set the decoded text to code input field
-        }
-    };
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    let isScanning = false;
 
     // Function to start QR code scanning
     const startQRScan = () => {
-        html5Qrcode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+        if (!isScanning) {
+            isScanning = true;
+            html5Qrcode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+        }
     };
+
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        if (decodedText) {
+            stopQRScan(); // Stop scanning
+            document.getElementById("code-input").value = decodedText;
+            document.getElementById("connect-btn").click();
+            document.getElementById("overlay").style.display = "none"; // Close overlay
+        }
+    };
+
+    const stopQRScan = () => {
+        if (isScanning) {
+            isScanning = false;
+            html5Qrcode.stop();
+        }
+    };
+
+    // Show QR reader overlay
+    document.getElementById("scan-btn").addEventListener("click", function() {
+        document.getElementById("overlay").style.display = "block";
+        startQRScan();
+    });
+
+    // Close QR reader overlay
+    document.getElementById("overlay").addEventListener("click", function(event) {
+        if (event.target === this) {
+            document.getElementById("overlay").style.display = "none";
+            document.getElementById("reader-container").classList.remove("hidden");
+            stopQRScan();
+        }
+    });
+
+
 
     // Add event listener to the button
     document.getElementById("scan-btn").addEventListener("click", startQRScan);
+
     const socket = io();
 
     // Declare codeInput variable
@@ -161,15 +197,19 @@
     });
 
     socket.on("receive_message", function(data) {
+        if (data.sender === socket.id) {
+            console.log("I am a sender")
+            messageClass = "sender-message";
+        } else {
+            console.log("I am a receiver")
+            messageClass = "receiver-message";
+        }
         // Unhide the message box
         document.getElementById("message-box").classList.remove("hidden");
         document.getElementById("message-box").classList.add("scrollable");
 
-        // Determine the class based on sender or receiver
-        var messageClass = data.sender === 'sender' ? 'sender-message' : 'receiver-message';
-
         // Append the received message to the message box with appropriate styling
-        var messageElement = "<p class='" + messageClass + "'>" + data.message + "</p>";
+        var messageElement = "<p class='" + messageClass + "'>" + data.message + "</p></br>";
         document.getElementById("message-box").innerHTML += messageElement;
     });
 

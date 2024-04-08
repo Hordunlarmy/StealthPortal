@@ -1,3 +1,4 @@
+from flask import request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_login import current_user
 from .engine.db_storage import User, Message, load_user
@@ -7,7 +8,7 @@ import portal
 
 
 # socketio = SocketIO(app, cors_allowed_origins="*")
-socketio = SocketIO()
+socketio = SocketIO(cors_allowed_origins="*")
 
 
 @socketio.on('connect')
@@ -70,12 +71,9 @@ def handle_user_join(data):
 def handle_send_message(data):
     from portal import db
     code = data["code"]
-    sender = 'receiver'
     client_id = session.get("client_id")
     if client_id not in portal.rooms:
         return
-    if client_id == client_id:
-        sender = 'sender'
     sender_room = portal.rooms[client_id]['code']
     encrypted_message = data["message"]
     encrypted_key = data["key"]
@@ -91,10 +89,10 @@ def handle_send_message(data):
                 db.session.commit()
     decrypted_key = decrypt_key(encrypted_key)
     decrypted_message = decrypt_message(encrypted_message, decrypted_key, iv)
-    emit('receive_message', {
-         'message': decrypted_message, 'sender': sender}, room=sender_room)
+    emit('receive_message', {'message': decrypted_message,
+         'sender': request.sid}, room=sender_room)
     print(
-        f"[DECRYPTED] {client_id} said: "
+        f"[DECRYPTED] {client_id}[{request.sid}] said: "
         f"{decrypted_message} in room {sender_room}"
     )
 
