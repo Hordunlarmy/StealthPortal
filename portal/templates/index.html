@@ -34,7 +34,7 @@
     </div>
   <p id="code-value" align="center"></p>
   <div class="form-field d-flex align-items-center">
-    <input type="text" placeholder="Type your message..." name="message" id="message-input" />
+      <textarea rows="2" placeholder="Type your message..." name="message" id="message-input"></textarea>
   </div>
     <button class="btn mt-3" type="submit" name="send">Send</button>
 </form>
@@ -157,7 +157,8 @@
         event.preventDefault(); // Prevent the form from submitting normally
 
         const sendMessage = () => {
-            const message = document.getElementById("message-input").value.trim();
+            const messageInput = document.getElementById("message-input"); // Get the message input field
+            const message = messageInput.value.trim();
             if (message === "") return;
 
             var secretKey = generateRandomNumber(32);
@@ -189,27 +190,41 @@
             console.log("Code: ", code)
             console.log("Encrypted Key: ", base64)
             socket.emit("send_message", { message: encryptedMessage, key: base64, iv: ivGen, code: code});
-            message.value = "";
         };
 
         sendMessage();
+        document.getElementById("message-input").value = "";
 
     });
 
     socket.on("receive_message", function(data) {
         if (data.sender === socket.id) {
             console.log("I am a sender")
-            messageClass = "sender-message";
+            messageClass = "sender-message own";
+            divClass = "inlineContainer own"
+            timeClass = "own"
         } else {
             console.log("I am a receiver")
-            messageClass = "receiver-message";
+            messageClass = "receiver-message other";
+            divClass = "inlineContainer other"
+            timeClass = "other"
         }
+        var timeUTC = new Date().toUTCString().slice(-12, -7);
         // Unhide the message box
         document.getElementById("message-box").classList.remove("hidden");
         document.getElementById("message-box").classList.add("scrollable");
 
         // Append the received message to the message box with appropriate styling
-        var messageElement = "<p class='" + messageClass + "'>" + data.message + "</p></br>";
+        var messageElement = `
+            <div class="bubbleWrapper">
+                <div class="${divClass}">
+                    <img class="inlineIcon" src="https://cdn1.iconfinder.com/data/icons/ninja-things-1/1772/ninja-simple-512.png">
+                    <p class="${messageClass}">${data.message}</p>
+                </div>
+            <span class="${timeClass}">${timeUTC}</span>
+            </div>
+        `;
+
         document.getElementById("message-box").innerHTML += messageElement;
     });
 

@@ -98,10 +98,25 @@ def profile():
 def history():
     user_id = current_user.id
     messages = Message.query.filter_by(user_id=user_id).all()
-    user_messages = []
+    user_messages = {}
     for message in messages:
         decrypted_key = decrypt_key(message.key)
         decrypted_message = decrypt_message(
             message.message, decrypted_key, message.iv)
-        user_messages.append(decrypted_message)
-    return render_template('history.html', title='History', messages=user_messages)
+        user_messages[message.id] = decrypted_message
+    return render_template(
+        'history.html', title='History', messages=user_messages)
+
+
+@main.route('/delete', strict_slashes=False, methods=["POST", "GET"])
+@login_required
+def delete_message():
+    from portal import db
+    message_ids = request.form.getlist('message_ids')
+    for message_id in message_ids:
+        message = Message.query.get(message_id)
+        if message:
+            if message.user_id == current_user.id:
+                db.session.delete(message)
+        db.session.commit()
+    return redirect(url_for('main.history'))

@@ -8,11 +8,37 @@
 <div class="text-center mt-4 name">
     History
 </div>
+</br>
+<form id="delete-form" action="{{ url_for('main.delete_message') }}" method="post">
+    <div id="message-box" class="scrollable">
+        {% for message_id, message_content in messages.items() %}
+        <div class="message-container">
+            <input type="checkbox" class="message-checkbox" name="message_ids" value="{{ message_id }}">
+            <p class="history-message">{{ message_content }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="btn mt-3" id="delete-selected" type="submit" name="delete_selected" style="display:none;">Delete Selected Messages</button>
+</form>
 
-<div id="message-box" class="scrollable">
-    {% for message in messages %}
-        <p class="sender-message">{{ message }}</p>
-    {% endfor %}
-</div>
+<script>
 
+    document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.message-checkbox');
+    const deleteSelectedButton = document.getElementById('delete-selected');
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const checkedCheckboxes = document.querySelectorAll('.message-checkbox:checked');
+            if (checkedCheckboxes.length > 0) {
+                deleteSelectedButton.style.display = 'block';
+            } else {
+                deleteSelectedButton.style.display = 'none';
+            }
+        });
+    });
+
+});
+
+</script>
 {% endblock content %}

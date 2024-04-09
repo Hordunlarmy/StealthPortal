@@ -20,7 +20,7 @@ body {
     margin: 80px auto;
     padding: 40px 30px 30px 30px;
     background-color: #ecf0f3;
-    border-radius: 15px;
+    border-radius: 50px;
     box-shadow: 13px 13px 20px #cbced1, -13px -13px 20px #fff;
 }
 
@@ -48,7 +48,8 @@ body {
     color: #555;
 }
 
-.wrapper .form-field input {
+.wrapper .form-field input,
+.wrapper .form-field textarea {
     width: 100%;
     display: block;
     border: none;
@@ -113,9 +114,10 @@ body {
     overflow-y: auto;
 }
 
-#code-input::placeholder {
-        text-align: center;
-    }
+#code-input::placeholder,
+#message-input::placeholder{
+    text-align: center;
+}
 
 .overlay {
     position: fixed;
@@ -145,7 +147,7 @@ body {
 
 .sender-message {
     color: #000; /* Black text color */
-    background-color: #DCF8C6; /* Green background for sender messages */
+    background-color: #ADD8E6; /* Light blue background for receiver messages */
     border-radius: 15px;
     padding: 10px;
     margin: 5px;
@@ -155,10 +157,53 @@ body {
 
 .receiver-message {
     color: #000; /* Black text color */
-    background-color: #ADD8E6; /* Light blue background for receiver messages */
+    background-color: #DCF8C6; /* Green background for sender messages */
     border-radius: 15px;
     padding: 10px;
     margin: 5px;
     clear: both; /* Clear floats */
     float: left; /* Float the receiver messages to the left */
+}
+
+.message-container {
+    display: flex;
+    justify-content: space-between; /* To push the message and image to the opposite sides */
+    align-items: center; /* Vertically align items */
+}
+
+.history-message {
+    flex: 1; /* Let the message take up remaining space */
+    text-align: center; /* Center the message */
+    background-color: #DCF8C6; /* Green background for sender messages */
+}
+
+.bubbleWrapper {
+	padding: 10px 10px;
+	display: flex;
+	justify-content: flex-end;
+	flex-direction: column;
+	align-self: flex-end;
+  color: #fff;
+}
+.inlineContainer {
+  display: inline-flex;
+}
+.inlineContainer.own {
+  flex-direction: row-reverse;
+}
+.inlineIcon {
+  width:20px;
+  object-fit: contain;
+}
+
+.own {
+	align-self: flex-end;
+}
+.other {
+	align-self: flex-start;
+}
+span.own,
+span.other{
+  font-size: 14px;
+  color: grey;
 }
