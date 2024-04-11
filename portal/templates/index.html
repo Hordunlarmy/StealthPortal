@@ -8,12 +8,14 @@
     <div class="text-center mt-4 name">
         Connect To Device
     </div>
-  <p id='user-code' align="center">{{code}}</p>
+    <p id='user-code' align="center"><b>{{code}}</b></p>
+    <p style="font-size: small; color: darkblue; text-align: center;">enter the above code on the other device to connect</p>
   <div class="form-field d-flex align-items-center">
     <span class="fas fa-key"></span>
-    <input type="text" placeholder="Enter Secret Key" name="code" id="code-input" />
+    <input type="text" placeholder="Enter Secret Code" name="code" id="code-input" />
   </div>
   </br>
+    <p style="font-size: small; color: darkblue; text-align: center;">or scan the QR code with the other device to connect</p>
   <div id="qrcode" align="center"></div>
   <div id="overlay" class="overlay">
     <div id="reader-container" class="reader-container">
@@ -142,6 +144,8 @@
             alert("Can't Use Your Own Code");
         } else if (data.status === "Incorrect") {
             alert("Wrong Code!!!");
+        } else {
+            alert("You need to enter a code")
         }
     });
 
@@ -225,7 +229,11 @@
             </div>
         `;
 
-        document.getElementById("message-box").innerHTML += messageElement;
+        var messageBox = document.getElementById("message-box");
+        messageBox.innerHTML += messageElement;
+
+        // Scroll to the bottom of the message box
+        messageBox.scrollTop = messageBox.scrollHeight;
     });
 
 });

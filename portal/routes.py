@@ -120,3 +120,8 @@ def delete_message():
                 db.session.delete(message)
         db.session.commit()
     return redirect(url_for('main.history'))
+
+
+@main.route('/about', strict_slashes=False)
+def about():
+    return render_template('about.html', title='About')

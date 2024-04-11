@@ -5,4 +5,3 @@ flask_bcrypt
 flask_sqlalchemy
 flask_login
 flask_wtf
-

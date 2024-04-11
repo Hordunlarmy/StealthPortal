@@ -41,6 +41,10 @@ def handle_user_join(data):
     for room_id, room_data in portal.rooms.items():
         all_code.append(room_data['code'])
 
+    if not room_code:
+        emit('user-join-response', {"status": "Empty"})
+        return
+
     if room_code in all_code:
         if room_code == session.get('code'):
             emit('user-join-response', {"status": "SelfCode"})
