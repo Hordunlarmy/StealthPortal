@@ -21,7 +21,11 @@ def before_request():
 
 
 @main.route('/', strict_slashes=False, methods=["POST", "GET"])
-@main.route('/home', strict_slashes=False, methods=["POST", "GET"])
+def home():
+    return "HOME PAGE"
+
+
+@main.route('/portal', strict_slashes=False, methods=["POST", "GET"])
 def index():
     if current_user.is_authenticated:
         authenticated = True
@@ -33,7 +37,7 @@ def index():
     return render_template('index.html', code=code)
 
 
-@main.route('/register', strict_slashes=False, methods=["POST", "GET"])
+@main.route('/portal/register', strict_slashes=False, methods=["POST", "GET"])
 def register():
     from portal import db
     if current_user.is_authenticated:
@@ -52,7 +56,7 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@main.route('/login', strict_slashes=False, methods=["POST", "GET"])
+@main.route('/portal/login', strict_slashes=False, methods=["POST", "GET"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -70,13 +74,13 @@ def login():
     return render_template('login.html', title='Login', form=form)
 
 
-@main.route('/logout', strict_slashes=False)
+@main.route('/portal/logout', strict_slashes=False)
 def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
 
-@main.route('/profile', strict_slashes=False, methods=["POST", "GET"])
+@main.route('/portal/profile', strict_slashes=False, methods=["POST", "GET"])
 @login_required
 def profile():
     from portal import db
@@ -93,7 +97,7 @@ def profile():
     return render_template('profile.html', title='Profile', form=form)
 
 
-@main.route('/history', strict_slashes=False, methods=["POST", "GET"])
+@main.route('/portal/history', strict_slashes=False, methods=["POST", "GET"])
 @login_required
 def history():
     user_id = current_user.id
@@ -108,7 +112,7 @@ def history():
         'history.html', title='History', messages=user_messages)
 
 
-@main.route('/delete', strict_slashes=False, methods=["POST", "GET"])
+@main.route('/portal/delete', strict_slashes=False, methods=["POST", "GET"])
 @login_required
 def delete_message():
     from portal import db
@@ -122,6 +126,6 @@ def delete_message():
     return redirect(url_for('main.history'))
 
 
-@main.route('/about', strict_slashes=False)
+@main.route('/portal/about', strict_slashes=False)
 def about():
     return render_template('about.html', title='About')
