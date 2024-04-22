@@ -1,6 +1,32 @@
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded");
 
+
+
+
+  const token = localStorage.getItem('jwt_token'); // Assuming the token is stored in local storage
+
+    fetch('/about', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    }).then(data => {
+        console.log(data);
+    }).catch(error => {
+        console.error('Fetch error:', error);
+    });
+
+
+
+
+
   // Hide message-form initially
   document.getElementById("message-form").classList.add("hidden");
 
@@ -142,7 +168,12 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   // Handle user-join-response event from the server
   socket.onmessage = function(event) {
-    var data = JSON.parse(event.data);
+    try {
+      var data = JSON.parse(event.data);
+    }
+    catch (error) {
+      console.log('Error parsing JSON:', error, data);
+    }
     if (data.kind === "Verify") {
       if (data.status === "CorrectCode") {
         let room_code = data.code;

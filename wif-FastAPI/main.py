@@ -1,6 +1,6 @@
-from fastapi import FastAPI, APIRouter, Request, WebSocket, HTTPException
+from fastapi import FastAPI, APIRouter, Request, WebSocket, HTTPException, Depends, Response
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 from Crypto.PublicKey import RSA
@@ -9,6 +9,12 @@ from Crypto.Hash import SHA256
 from base64 import b64decode
 from Crypto.Util.Padding import unpad
 from forms import RegistrationForm, LoginForm, UpdateProfileForm
+from engine import models
+from engine import get_db, create_db
+from sqlalchemy.orm import Session
+from auth import TokenData, Token, login_user, current_user, logout_user, verify_passwd
+from typing import Annotated
+import uvicorn
 import random
 import uuid
 import json
@@ -16,7 +22,10 @@ import json
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-template = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates")
+
+create_db()
+user_dependency = Annotated[TokenData, Depends(current_user)]
 
 
 class ConnectionManager:
@@ -193,31 +202,97 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/")
 async def index(request: Request):
     code = generate_secret_word(5)
-    return template.TemplateResponse(
-        "index.html", {"request": request, "code": code, "title": "Home"})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "code": code, "title": "Home", "current_user": user_dependency})
 
 
 @app.get("/about")
 async def about(request: Request):
-    return template.TemplateResponse("about.html", {"request": request, "title": "About"})
+    return templates.TemplateResponse("about.html", {"request": request, "title": "About", "current_user": user_dependency})
 
 
 @app.get("/register")
 @app.post("/register", response_class=HTMLResponse)
-async def register(request: Request):
+async def register(request: Request, db: Session = Depends(get_db)):
+    from auth import hash_passwd
     form = await RegistrationForm.from_formdata(request)
     if await form.validate_on_submit():
+        hashed_password = hash_passwd(form.password.data.encode('utf-8'))
+        user = models.User(username=form.username.data,
+                           email=form.email.data, password=hashed_password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
         # flash(f'Account created for {form.username.data}!', 'success')
-        return template.TemplateResponse("index.html", {"request": request})
-    return template.TemplateResponse("register.html", {"request": request, "title": 'Register', "form": form})
+        return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("register.html", {"request": request, "title": 'Register', "form": form, "current_user": user_dependency})
 
 
-@app.get("/login")
-@app.post("/login", response_class=HTMLResponse)
+@app.get("/login", response_class=HTMLResponse)
 async def login(request: Request):
     form = await LoginForm.from_formdata(request)
+    return templates.TemplateResponse("login.html", {"request": request, "title": 'Login', "form": form, "current_user": user_dependency})
+
+
+@app.post("/login")
+async def post_login(request: Request, response: Response, db: Session = Depends(get_db)):
+    form = await LoginForm.from_formdata(request)
+
     if await form.validate_on_submit():
-        # flash('You have been logged in!', 'success')
-        return template.TemplateResponse("index.html", {"request": request})
-    # flash('Login Unsuccessful. Please check username and password', 'danger')
-    return template.TemplateResponse("login.html", {"request": request, "title": 'Login', "form": form})
+        user = db.query(models.User).filter(
+            models.User.email == form.email.data).first()
+
+        if user and verify_passwd(form.password.data.encode('utf-8'), user.password):
+            # Process login
+            token_data = await login_user(response, user, remember=form.remember.data)
+            print("User logged in successfully, redirecting to home...")
+            # Redirect to the home page after successful login
+            return token_data
+
+
+@app.get("/logout")
+async def logout(response: Response, user: current_user):
+    await logout_user(response)
+    return RedirectResponse(url="/home", status_code=303)
+
+
+@app.get('/profile', response_class=HTMLResponse)
+async def profile(request: Request, user: user_dependency, db: Session = Depends(get_db)):
+    form = UpdateProfileForm()  # Assume default is GET
+    form.username = current_user.username
+    form.email = current_user.email
+    return templates.TemplateResponse('profile.html', {"request": request, "form": form, "title": "Profile", "current_user": current_user})
+
+
+@app.post('/profile', response_class=HTMLResponse)
+async def profile_post(request: Request, user: user_dependency, db: Session = Depends(get_db)):
+    form = UpdateProfileForm(await request.form())
+    if form.validate():  # Implement validation method or use Pydantic validation
+        current_user.username = form.username
+        current_user.email = form.email
+        db.commit()
+        # FastAPI doesn't support Flask's flash; use alternative like session cookies or frontend handling
+        return RedirectResponse(url='/profile', status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get('/history', response_class=HTMLResponse)
+async def history(request: Request, user: user_dependency, db: Session = Depends(get_db)):
+    current_user = user
+    messages = db.query(models.Message).filter_by(
+        user_id=current_user.id).all()
+    user_messages = {}
+    for message in messages:
+        decrypted_key = decrypt_key(message.key)
+        decrypted_message = decrypt_message(
+            message.message, decrypted_key, message.iv)
+        user_messages[message.id] = decrypted_message
+    return templates.TemplateResponse('history.html', {"request": request, "messages": user_messages, "title": "History", "current_user": current_user})
+
+
+@app.get('/delete', response_class=HTMLResponse)
+async def delete_message(request: Request, user: user_dependency, db: Session = Depends(get_db)):
+    return {"detail": "Deleted"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", reload="True")

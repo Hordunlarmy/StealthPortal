@@ -3,13 +3,13 @@
 {% block content %}
 
 <div class="logo">
-    <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="">
+    <img src="{{url_for('static', path='images/logo.jpg')}}" alt="">
 </div>
 <div class="text-center mt-4 name">
     History
 </div>
 </br>
-<form id="delete-form" action="{{ url_for('main.delete_message') }}" method="post">
+<form id="delete-form" action="{{ url_for('delete_message') }}" method="post">
     <div id="message-box" class="scrollable">
         {% for message_id, message_content in messages.items() %}
         <div class="message-container">
