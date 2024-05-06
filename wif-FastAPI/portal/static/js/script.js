@@ -1,36 +1,10 @@
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded");
 
-
-
-
-  const token = localStorage.getItem('jwt_token'); // Assuming the token is stored in local storage
-
-    fetch('/about', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-        }
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    }).then(data => {
-        console.log(data);
-    }).catch(error => {
-        console.error('Fetch error:', error);
-    });
-
-
-
-
-
   // Hide message-form initially
   document.getElementById("message-form").classList.add("hidden");
 
-  let userCode = document.getElementById("user-code").textContent; // Use textContent instead of value
+  let userCode = document.getElementById("user-code").textContent;
 
   var qrcode = new QRCode(document.getElementById("qrcode"), {
     text: userCode,
@@ -85,12 +59,10 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-
-
   // Add event listener to the button
   document.getElementById("scan-btn").addEventListener("click", startQRScan);
 
-  var socket = new WebSocket("ws://localhost:8000/ws");
+  var socket = new WebSocket("ws://localhost:8000/");
 
   socket.onopen = function(event) {
     console.log("WebSocket connection established");
@@ -109,8 +81,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
   });
 
-
-
   // Add event listener for message-form submit
   document.getElementById("message-form").addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent the form from submitting normally
@@ -127,23 +97,19 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     const sendMessage = () => {
-      const messageInput = document.getElementById("message-input"); // Get the message input field
+      const messageInput = document.getElementById("message-input");
       const message = messageInput.value.trim();
       if (message === "") return;
 
       var secretKey = generateRandomNumber(32);
       var aesKey = CryptoJS.enc.Base64.parse(secretKey);
       var ivGen = Array.from({length: 16}, () => Math.floor(Math.random() * 10)).join('');
-      console.log("secretKey",secretKey);
-      console.log("ivGen",ivGen);
       var iv = CryptoJS.enc.Utf8.parse(ivGen);
       var encryptionOptions = {
         iv: iv,
         mode: CryptoJS.mode.CBC
       };
       var encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, encryptionOptions).toString();
-      console.log(aesKey);
-      console.log("Encrypted Message: ", encryptedMessage)
       var publicKey = forge.pki.publicKeyFromPem('-----BEGIN PUBLIC KEY-----\n'+
         'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/EqD04Y7XKJleTYDL9N7noeU2\n'+
         'q4fF0h9d1/8W25pZwFi+yhXWAsH/If8J02M5EuEdvI/y7dqa8f0EyQ3ceuRmIs7q\n'+
@@ -157,8 +123,6 @@ document.addEventListener("DOMContentLoaded", function() {
       });
       var base64 = forge.util.encode64(encryptedKey);
       code = document.getElementById("code-value").textContent
-      console.log("Code: ", code)
-      console.log("Encrypted Key: ", base64)
       socket.send(JSON.stringify({ event: "encryption", message: encryptedMessage, key: base64, iv: ivGen, code: code }));
     };
 

@@ -7,6 +7,10 @@ import random
 
 
 def generate_secret_word(length):
+    """
+    returns a randomly generated secret word
+    """
+
     vowels = 'aeiou'
     consonants = 'bcdfghjklmnpqrstvwxyz'
     secret_word = ''
@@ -22,7 +26,7 @@ def generate_secret_word(length):
 
 def load_private_key():
     try:
-        with open('privatekey.pem', 'r') as file:
+        with open('portal/security/privatekey.pem', 'r') as file:
             key_contents = file.read()
             private_key = RSA.import_key(key_contents)
             return private_key

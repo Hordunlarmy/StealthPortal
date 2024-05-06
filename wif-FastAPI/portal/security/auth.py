@@ -1,5 +1,6 @@
-from fastapi.security import OAuth2
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import (OAuth2, OAuth2PasswordBearer,
+                              OAuth2PasswordRequestForm, HTTPBearer,
+                              HTTPAuthorizationCredentials)
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.security.utils import get_authorization_scheme_param
 from fastapi import HTTPException, status, Request, Depends, Response
@@ -83,11 +84,8 @@ async def create_access_token(username: str, email: str,
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    if token is None:
+        return None
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user = TokenData(**payload)
