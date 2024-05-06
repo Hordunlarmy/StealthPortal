@@ -16,6 +16,8 @@ from .bearer import OAuth2PasswordBearerWithCookie
 SECRET_KEY = config("secret")
 ALGORITHM = config("algorithm")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/login")
 
 
 class Token(BaseModel):
@@ -29,11 +31,6 @@ class TokenData(BaseModel):
     id: int
     exp: datetime
     authenticated: bool = False
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/login")
 
 
 def verify_passwd(plain_password, hashed_password):
@@ -65,13 +62,8 @@ async def login_user(response, user, remember):
     print("JWToken", access_token)
 
 
-async def logout_user(request):
-    token = request.cookies.get("access_token")
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    print("logout Token", token)
-    token.update({"exp": datetime.now(timezone.utc)})
-    print("Logout sucesseful")
-    return {"message": "You have been successfully logged out."}
+async def logout_user(response):
+    response.delete_cookie("access_token")
 
 
 async def create_access_token(username: str, email: str,

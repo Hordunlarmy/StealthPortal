@@ -6,7 +6,7 @@ from portal.engine import models
 from portal.engine import get_db
 from sqlalchemy.orm import Session
 from portal.security.auth import (TokenData, Token, login_user, current_user,
-                                  logout_user, verify_passwd)
+                                  logout_user, verify_passwd, hash_passwd)
 from portal.security.rsa import generate_secret_word
 from typing import Annotated
 from fastapi.templating import Jinja2Templates
@@ -38,7 +38,6 @@ async def about(request: Request, user: user_dependency):
 @portal.post("/register", response_class=HTMLResponse)
 async def register(request: Request, user: user_dependency,
                    db: Session = Depends(get_db)):
-    from auth import hash_passwd
     form = await RegistrationForm.from_formdata(request)
     if await form.validate_on_submit():
         hashed_password = hash_passwd(form.password.data.encode('utf-8'))
@@ -49,61 +48,67 @@ async def register(request: Request, user: user_dependency,
         db.refresh(user)
 
         # flash(f'Account created for {form.username.data}!', 'success')
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/")
     return templates.TemplateResponse("register.html", {"request": request,
                                                         "title": 'Register',
                                                         "form": form,
                                                         "current_user": user})
 
 
-@portal.route("/login", methods=["GET", "POST"])
-async def login(request: Request, user: user_dependency,
-                response: Response = Depends(), db: Session = Depends(get_db)):
-    if request.method == "GET":
-        form = LoginForm()
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "title": 'Login',
-            "form": form,
-            "current_user": user
-        })
+@portal.get("/login", response_class=HTMLResponse)
+async def login(request: Request, user: user_dependency):
+    form = await LoginForm.from_formdata(request)
+    return templates.TemplateResponse("login.html",
+                                      {"request": request,
+                                       "title": 'Login',
+                                       "form": form,
+                                       "current_user": user})
 
-    elif request.method == "POST":
-        form = await LoginForm.from_formdata(request)
-        if await form.validate_on_submit():
-            user = db.query(models.User).filter(
-                models.User.email == form.email.data).first()
-            if user and verify_passwd(form.password.data.encode('utf-8'),
-                                      user.password):
-                token_data = await login_user(response, user,
-                                              remember=form.remember.data)
-                print("User logged in successfully, redirecting to home...")
-                return RedirectResponse(url="/")
-            else:
-                print("Authentication failed, redirecting back to login...")
-                return RedirectResponse(url="/login?error=Invalid credentials")
-        else:
-            print("Form validation failed...")
-            # Returning the form back to the user with validation errors
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "title": 'Login',
-                "form": form,
-                "current_user": user
-            })
+
+@portal.post("/login")
+async def post_login(request: Request, response: Response,
+                     user: user_dependency,
+                     db: Session = Depends(get_db)):
+    form = await LoginForm.from_formdata(request)
+
+    if await form.validate_on_submit():
+        user = db.query(models.User).filter(
+            models.User.email == form.email.data).first()
+        if user and verify_passwd(form.password.data.encode('utf-8'),
+                                  user.password):
+            # Process login
+            token_data = await login_user(response, user,
+                                          remember=form.remember.data)
+            print("User logged in successfully, redirecting to home...")
+            # Redirect to the home page after successful login
+            return {"detail": "login success"}
+            return RedirectResponse(url="/login", status_code=303)
+
+        return RedirectResponse(url="/login", status_code=303)
+    else:
+        return RedirectResponse(url="/login", status_code=303)
 
 
 @portal.get("/test-cookie")
 async def test_cookie(response: Response):
-    access_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN0cmluZyIsImVtYWlsIjoic3RyaW5nQGdtYWlsLmNvbSIsImlkIjoyLCJleHAiOjE3MTQ5MjQwMDR9.Bk9mtnDu0y57YrWAI4gKLFMIkz_ChP_SoH--x26Du44'
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}",
-                        httponly=True, path='/')
+    class User:
+        def __init__(self, data):
+            self.__dict__.update(data)
+
+    user_data = {"id": "1", "username": "odun",
+                 "email": "hordunlarmy@gmail.com"}
+
+    user = User(user_data)
+    rem = False
+    token_data = await login_user(response, user,
+                                  remember=rem)
     return {"message": "Test cookie set"}
 
 
 @portal.get("/logout")
-async def logout(request: Request):
-    await logout_user(request)
+async def logout(response: Response):
+    await logout_user(response)
+    return {"detail": "logout success"}
     return RedirectResponse(url="/", status_code=303)
 
 
