@@ -37,8 +37,7 @@
             Persistent Access
           </a>
           <ul class="dropdown-menu">
-            <pre>{{ current_user | safe }}</pre>
-            {% if current_user.is_authenticated %}
+            {% if current_user.authenticated %}
             <li><a class="dropdown-item" href={{ url_for('profile') }}>Profile</a></li>
             <li><a class="dropdown-item" href={{ url_for('logout') }}>Logout</a></li>
             {% else %}

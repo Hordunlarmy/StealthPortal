@@ -23,5 +23,5 @@ def get_db():
 
 def create_db():
     # Create database if it doesnt already exist
-    from engine import models
+    from portal.engine import models
     models.Base.metadata.create_all(bind=engine)
