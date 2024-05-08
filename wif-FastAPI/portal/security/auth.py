@@ -51,7 +51,7 @@ async def login_user(response, user, remember):
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
-        httponly=True,  # JavaScript can't access the cookie
+        httponly=False,  # JavaScript can't access the cookie
         max_age=persist.total_seconds(),  # Duration the cookie is valid
         path='/',  # Global path
         secure=False,  # Only sent over HTTPS

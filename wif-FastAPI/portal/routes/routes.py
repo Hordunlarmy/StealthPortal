@@ -77,12 +77,13 @@ async def post_login(request: Request, response: Response,
         if user and verify_passwd(form.password.data.encode('utf-8'),
                                   user.password):
             # Process login
-            token_data = await login_user(response, user,
+            await login_user(response, user,
                                           remember=form.remember.data)
             print("User logged in successfully, redirecting to home...")
             # Redirect to the home page after successful login
-            return {"detail": "login success"}
-            return RedirectResponse(url="/login", status_code=303)
+            # return {"detail": "login success"}
+            return RedirectResponse(url="/", status_code=303)
+            # return JSONResponse(content={"redirect_to": "/"})
 
         return RedirectResponse(url="/login", status_code=303)
     else:
