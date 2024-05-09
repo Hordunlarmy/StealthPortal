@@ -124,12 +124,8 @@ document.addEventListener("DOMContentLoaded", function() {
         mode: CryptoJS.mode.CBC
       };
       var encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, encryptionOptions).toString();
-      var publicKey = forge.pki.publicKeyFromPem('-----BEGIN PUBLIC KEY-----\n'+
-        'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/EqD04Y7XKJleTYDL9N7noeU2\n'+
-        'q4fF0h9d1/8W25pZwFi+yhXWAsH/If8J02M5EuEdvI/y7dqa8f0EyQ3ceuRmIs7q\n'+
-        '5SkDfueh3DgiEfJm2edYG5+k28klJCplZ7BwApkZgJZTBHPHt67yoHtcjFpbkpAF\n'+
-        'fKCRwqLOCVT8+czrWwIDAQAB\n'+
-        '-----END PUBLIC KEY-----');
+      const pub_key = document.querySelector('meta[name="pub_key"]').getAttribute('content');
+      var publicKey = forge.pki.publicKeyFromPem(pub_key);
 
       var encryptedKey = publicKey.encrypt(secretKey, "RSA-OAEP", {
         md: forge.md.sha256.create(),
