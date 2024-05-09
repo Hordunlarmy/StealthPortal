@@ -54,7 +54,7 @@ async def login_user(response, user, remember):
         httponly=True,  # JavaScript can't access the cookie
         max_age=persist.total_seconds(),  # Duration the cookie is valid
         path='/',  # Global path
-        secure=False,  # Only sent over HTTPS
+        secure=True,  # Only sent over HTTPS
         samesite='Lax'  # Strict or Lax, Lax is generally a safe default
     )
     response.set_cookie(key="test", value="hello_odun",

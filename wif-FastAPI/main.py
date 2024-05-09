@@ -11,7 +11,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="portal/static"), name="static")
 templates = Jinja2Templates(directory="portal/templates")
 app.include_router(portal, prefix="/portal")
-app.include_router(socket)
+app.include_router(socket, prefix="/portal")
 
 create_db()
 
