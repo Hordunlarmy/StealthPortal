@@ -51,7 +51,7 @@ async def login_user(response, user, remember):
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
-        httponly=False,  # JavaScript can't access the cookie
+        httponly=True,  # JavaScript can't access the cookie
         max_age=persist.total_seconds(),  # Duration the cookie is valid
         path='/',  # Global path
         secure=False,  # Only sent over HTTPS
@@ -60,6 +60,7 @@ async def login_user(response, user, remember):
     response.set_cookie(key="test", value="hello_odun",
                         httponly=True, path='/')
     print("JWToken", access_token)
+    return response
 
 
 async def logout_user(response):
@@ -88,10 +89,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 async def current_user(user: Annotated[TokenData, Depends(get_current_user)]):
     user_data = user
-    print(f"-----{user_data}-----")
     if user_data is None:
         return None
         # raise HTTPException(status_code=400, detail="Inactive user")
     user_data.authenticated = True
-    print(user_data)
     return user_data

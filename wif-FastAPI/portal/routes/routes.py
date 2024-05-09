@@ -34,21 +34,34 @@ async def about(request: Request, user: user_dependency):
                                                      "current_user": user})
 
 
-@portal.get("/register")
+@portal.get("/register", response_class=HTMLResponse)
+async def register(request: Request, user: user_dependency):
+    form = await RegistrationForm.from_formdata(request)
+    return templates.TemplateResponse("register.html",
+                                      {"request": request,
+                                       "title": 'Register',
+                                       "form": form,
+                                       "current_user": user})
+
+
 @portal.post("/register", response_class=HTMLResponse)
-async def register(request: Request, user: user_dependency,
-                   db: Session = Depends(get_db)):
+async def register_post(request: Request, user: user_dependency,
+                        db: Session = Depends(get_db)):
     form = await RegistrationForm.from_formdata(request)
     if await form.validate_on_submit():
         hashed_password = hash_passwd(form.password.data.encode('utf-8'))
         user = models.User(username=form.username.data,
                            email=form.email.data, password=hashed_password)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except Exception as e:
+            db.rollback()
+            print(e)
 
         # flash(f'Account created for {form.username.data}!', 'success')
-        return RedirectResponse(url="/")
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("register.html", {"request": request,
                                                         "title": 'Register',
                                                         "form": form,
@@ -74,68 +87,70 @@ async def post_login(request: Request, response: Response,
     if await form.validate_on_submit():
         user = db.query(models.User).filter(
             models.User.email == form.email.data).first()
-        if user and verify_passwd(form.password.data.encode('utf-8'),
-                                  user.password):
-            # Process login
-            await login_user(response, user,
-                                          remember=form.remember.data)
-            print("User logged in successfully, redirecting to home...")
-            # Redirect to the home page after successful login
-            # return {"detail": "login success"}
-            return RedirectResponse(url="/", status_code=303)
-            # return JSONResponse(content={"redirect_to": "/"})
 
-        return RedirectResponse(url="/login", status_code=303)
-    else:
-        return RedirectResponse(url="/login", status_code=303)
-
-
-@portal.get("/test-cookie")
-async def test_cookie(response: Response):
-    class User:
-        def __init__(self, data):
-            self.__dict__.update(data)
-
-    user_data = {"id": "1", "username": "odun",
-                 "email": "hordunlarmy@gmail.com"}
-
-    user = User(user_data)
-    rem = False
-    token_data = await login_user(response, user,
-                                  remember=rem)
-    return {"message": "Test cookie set"}
+        next_page = request.query_params.get('next')
+        next_page_red = RedirectResponse(url=next_page, status_code=303)
+        normal_redirect = RedirectResponse(url="/", status_code=303)
+        redirect_response = next_page_red if next_page else normal_redirect
+        await login_user(redirect_response, user,
+                         remember=form.remember.data)
+        print("User logged in successfully, redirecting to home...")
+        return redirect_response
+    return templates.TemplateResponse("login.html", {"request": request,
+                                                     "title": 'Login',
+                                                     "form": form,
+                                                     "current_user": user})
 
 
 @portal.get("/logout")
 async def logout(response: Response):
-    await logout_user(response)
-    return {"detail": "logout success"}
-    return RedirectResponse(url="/", status_code=303)
+    redirect_response = RedirectResponse(url="/", status_code=303)
+    await logout_user(redirect_response)
+    return redirect_response
 
 
 @portal.get('/profile', response_class=HTMLResponse)
 async def profile(request: Request, user: user_dependency,
                   db: Session = Depends(get_db)):
-    form = UpdateProfileForm()
-    form.username = user.username
-    form.email = user.email
+    if user is None:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+    user_data = db.query(models.User).filter(models.User.id == user.id).first()
+    form = await UpdateProfileForm.from_formdata(request)
+    form.username.data = user_data.username
+    form.email.data = user_data.email
     return templates.TemplateResponse('profile.html', {"request": request,
                                                        "form": form,
                                                        "title": "Profile",
                                                        "current_user": user})
 
 
-@portal.post('/profile', response_class=HTMLResponse)
+@portal.post('/profile')
 async def profile_post(request: Request, user: user_dependency,
                        db: Session = Depends(get_db)):
-    form = UpdateProfileForm(await request.form())
-    if form.validate():
-        current_user.username = form.username
-        current_user.email = form.email
-        db.commit()
-        # FastAPI doesn't support Flask's flash; use alternative
-        # like session cookies or frontend handling
-        return RedirectResponse(url='/profile')
+    if user is None:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+    profile = db.query(models.User).filter(
+        models.User.id == user.id).first()
+
+    form = await UpdateProfileForm.from_formdata(
+        request=request, current_user=profile)
+
+    if await form.validate_on_submit():
+        if profile:
+            profile.username = form.username.data
+            profile.email = form.email.data
+            try:
+                db.commit()
+                db.refresh(profile)
+                return RedirectResponse(url='/profile', status_code=303)
+            except Exception as e:
+                db.rollback()
+                print(e)  # Consider using logging instead of print
+    return templates.TemplateResponse("profile.html",
+                                      {"request": request,
+                                       "title": 'Profile',
+                                       "form": form,
+                                       "current_user": user})
 
 
 @portal.get('/history', response_class=HTMLResponse)
@@ -143,10 +158,10 @@ async def history(request: Request,
                   user: Annotated[TokenData, Depends(current_user)],
                   db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url="/login")
+        return RedirectResponse(url=f"/login?next={request.url.path}")
     else:
-        messages = db.query(models.Message).filter_by(
-            user_id=current_user.id).all()
+        messages = db.query(models.Message).filter(
+            models.Message.user_id == user.id).all()
         user_messages = {}
         for message in messages:
             decrypted_key = decrypt_key(message.key)
