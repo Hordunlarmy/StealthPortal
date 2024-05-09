@@ -13,8 +13,9 @@ from decouple import config
 from .bearer import OAuth2PasswordBearerWithCookie
 
 
-SECRET_KEY = config("secret")
-ALGORITHM = config("algorithm")
+SECRET_KEY = config(
+    "secret", default="cee619cd280708255b2ea19f56d24931d055d4148a8ed18688c962")
+ALGORITHM = config("algorithm", default="HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/login")
@@ -43,6 +44,7 @@ def hash_passwd(password):
 
 async def login_user(response, user, remember):
     persist = timedelta(minutes=3)
+    cookie_config = config('server', default="development")
     if remember:
         persist = timedelta(days=30)
 
@@ -52,11 +54,11 @@ async def login_user(response, user, remember):
         key="access_token",
         value=f"Bearer {access_token}",
         # JavaScript can't access the cookie
-        httponly=False if config('server') == 'development' else True,
+        httponly=False if cookie_config == 'development' else True,
         max_age=persist.total_seconds(),  # Duration the cookie is valid
         path='/',  # Global path
         # Only sent over HTTPS
-        secure=False if config('server') == 'production' else True,
+        secure=False if cookie_config == 'development' else True,
         samesite='Lax'  # Strict or Lax, Lax is generally a safe default
     )
     return response

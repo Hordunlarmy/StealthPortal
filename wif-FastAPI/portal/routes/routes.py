@@ -20,7 +20,7 @@ user_dependency = Annotated[TokenData, Depends(current_user)]
 
 @portal.get("/")
 async def index(request: Request, user: user_dependency):
-    site = config('site')
+    site = config('site', default="ws://localhost:8000/portal/")
     code = generate_secret_word(5)
     access_token = request.cookies.get("test")
     return templates.TemplateResponse(

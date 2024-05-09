@@ -28,7 +28,11 @@ def generate_secret_word(length):
 
 def load_private_key():
     try:
-        if config('private_key') != "privatekey.pem":
+        priv_key = config('private_key', default="generate a key pair, "
+                          "move the private key in to portal/security/ as "
+                          "privatekey.pem .... pub key content goes to "
+                          "javascript client_site")
+        if priv_key != "privatekey.pem":
             key_contents = base64.b64decode(config('private_key'))
         else:
             with open('portal/security/privatekey.pem', 'r') as file:
