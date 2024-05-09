@@ -28,15 +28,9 @@ def generate_secret_word(length):
 
 def load_private_key():
     try:
-        priv_key = config('private_key', default="generate a key pair, "
-                          "move the private key in to portal/security/ as "
-                          "privatekey.pem .... pub key content goes to "
-                          "javascript client_site")
-        if priv_key != "privatekey.pem":
-            key_contents = base64.b64decode(config('private_key'))
-        else:
-            with open('portal/security/privatekey.pem', 'r') as file:
-                key_contents = file.read()
+        key_contents = base64.b64decode(config('private_key'))
+        # with open('portal/security/privatekey.pem', 'r') as file:
+        #    key_contents = file.read()
         private_key = RSA.import_key(key_contents)
         return private_key
     except FileNotFoundError:

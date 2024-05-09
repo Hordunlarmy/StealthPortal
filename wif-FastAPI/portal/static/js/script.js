@@ -124,8 +124,9 @@ document.addEventListener("DOMContentLoaded", function() {
         mode: CryptoJS.mode.CBC
       };
       var encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, encryptionOptions).toString();
-      const pub_key = document.querySelector('meta[name="pub_key"]').getAttribute('content');
-      var publicKey = forge.pki.publicKeyFromPem(pub_key);
+      const pub_key = document.querySelector('meta[name="pub-key"]').getAttribute('content');
+      const pub_key_bytes = forge.util.decode64(pub_key);
+      const publicKey = forge.pki.publicKeyFromPem(pub_key_bytes);
 
       var encryptedKey = publicKey.encrypt(secretKey, "RSA-OAEP", {
         md: forge.md.sha256.create(),
