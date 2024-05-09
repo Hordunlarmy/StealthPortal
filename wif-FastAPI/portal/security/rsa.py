@@ -4,6 +4,8 @@ from Crypto.Hash import SHA256
 from base64 import b64decode
 from Crypto.Util.Padding import unpad
 import random
+import base64
+from decouple import config
 
 
 def generate_secret_word(length):
@@ -26,10 +28,11 @@ def generate_secret_word(length):
 
 def load_private_key():
     try:
-        with open('portal/security/privatekey.pem', 'r') as file:
-            key_contents = file.read()
-            private_key = RSA.import_key(key_contents)
-            return private_key
+        key_contents = base64.b64decode(config('private_key'))
+        # with open('portal/security/privatekey.pem', 'r') as file:
+        #     key_contents = file.read()
+        private_key = RSA.import_key(key_contents)
+        return private_key
     except FileNotFoundError:
         raise HTTPException(
             status_code=404, detail="Private key file not found!")
