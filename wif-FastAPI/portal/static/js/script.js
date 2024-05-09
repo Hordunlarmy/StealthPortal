@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // Add event listener to the button
   document.getElementById("scan-btn").addEventListener("click", startQRScan);
 
-  var socket = new WebSocket("ws://hordun.tech/portal/");
+  var socket = new WebSocket("wss://hordun.tech/portal/");
 
   socket.onopen = function(event) {
     console.log("WebSocket connection established");
