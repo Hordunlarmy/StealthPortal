@@ -51,15 +51,14 @@ async def login_user(response, user, remember):
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
-        httponly=True,  # JavaScript can't access the cookie
+        # JavaScript can't access the cookie
+        httponly=False if config('server') == 'development' else True,
         max_age=persist.total_seconds(),  # Duration the cookie is valid
         path='/',  # Global path
-        secure=True,  # Only sent over HTTPS
+        # Only sent over HTTPS
+        secure=False if config('server') == 'production' else True,
         samesite='Lax'  # Strict or Lax, Lax is generally a safe default
     )
-    response.set_cookie(key="test", value="hello_odun",
-                        httponly=True, path='/')
-    print("JWToken", access_token)
     return response
 
 
