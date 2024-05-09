@@ -67,9 +67,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // Add event listener to the button
   document.getElementById("scan-btn").addEventListener("click", startQRScan);
 
-    // var socket = new WebSocket("wss://hordun.tech/portal/");
+  // var socket = new WebSocket("wss://hordun.tech/portal/");
   const site = document.querySelector('meta[name="site-config"]').getAttribute('content');
   const socket = new WebSocket(site);
+
+  if (socket.readyState === WebSocket.CLOSING || socket.readyState === WebSocket.CLOSED) {
+    console.log("WebSocket is closing or already closed.");
+    alert("Connection is closing or already closed. Please try reconnecting.");
+  }
 
   socket.onopen = function(event) {
     document.getElementById("connect-btn").classList.remove("hidden");
