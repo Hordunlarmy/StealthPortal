@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %} StealthPortal - {{ title }}  {% endblock title %}
 {% block content %}
+<meta name="site-config" content= {{ config_variable }}>
 <form method="post" class="p-2 mt-2"  id="connect-form">
     <div class="logo">
         <img src="{{url_for('static', path='images/logo.jpg')}}" alt="">
@@ -23,7 +24,7 @@
     </div>
   </div>
   </br>
-   <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
+    <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
     <button class="btn mt-3"  type="button" id="scan-btn">Scan QR</button>
 </form>
 

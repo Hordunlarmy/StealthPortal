@@ -23,11 +23,11 @@ async def websocket_endpoint(websocket: WebSocket):
             event_type = data.get("event")
             if event_type == "secret-code":
                 secret_code = data.get("code")
-                # print(f"Secret_code - {secret_code}")
+                print(f"Secret_code - {secret_code}")
                 await manager.connect(secret_code, websocket)
             if event_type == "join":
                 code = data.get('code')
-                # print(f"Code Entered - {code}")
+                print(f"Code Entered - {code}")
                 status = await manager.user_join(code, secret_code, websocket)
                 await manager.verify_secret(code, status, websocket)
                 if status == "CorrectCode":

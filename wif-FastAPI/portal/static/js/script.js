@@ -1,8 +1,13 @@
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded");
 
+
   // Hide message-form initially
   document.getElementById("message-form").classList.add("hidden");
+
+  // Hide connect buttons
+  document.getElementById("connect-btn").classList.add("hidden");
+  document.getElementById("scan-btn").classList.add("hidden");
 
   let userCode = document.getElementById("user-code").textContent;
 
@@ -62,10 +67,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // Add event listener to the button
   document.getElementById("scan-btn").addEventListener("click", startQRScan);
 
-  var socket = new WebSocket("wss://hordun.tech/portal/");
+    // var socket = new WebSocket("wss://hordun.tech/portal/");
+  const site = document.querySelector('meta[name="site-config"]').getAttribute('content');
+  const socket = new WebSocket(site);
 
   socket.onopen = function(event) {
-    console.log("WebSocket connection established");
+    document.getElementById("connect-btn").classList.remove("hidden");
+    document.getElementById("scan-btn").classList.remove("hidden");
+    console.log("WebSocket connection established at", socket.url);
 
     // Send data to backend
     socket.send(JSON.stringify({ event: "secret-code", code: userCode }));

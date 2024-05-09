@@ -28,9 +28,11 @@ def generate_secret_word(length):
 
 def load_private_key():
     try:
-        key_contents = base64.b64decode(config('private_key'))
-        # with open('portal/security/privatekey.pem', 'r') as file:
-        #     key_contents = file.read()
+        if config('private_key') != "privatekey.pem":
+            key_contents = base64.b64decode(config('private_key'))
+        else:
+            with open('portal/security/privatekey.pem', 'r') as file:
+                key_contents = file.read()
         private_key = RSA.import_key(key_contents)
         return private_key
     except FileNotFoundError:

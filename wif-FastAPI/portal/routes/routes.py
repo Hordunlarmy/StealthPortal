@@ -10,6 +10,7 @@ from portal.security.auth import (TokenData, Token, login_user, current_user,
 from portal.security.rsa import generate_secret_word
 from typing import Annotated
 from fastapi.templating import Jinja2Templates
+from decouple import config
 
 
 portal = APIRouter()
@@ -19,10 +20,11 @@ user_dependency = Annotated[TokenData, Depends(current_user)]
 
 @portal.get("/")
 async def index(request: Request, user: user_dependency):
+    site = config('site')
     code = generate_secret_word(5)
     access_token = request.cookies.get("test")
     return templates.TemplateResponse(
-        "index.html", {"request": request,
+        "index.html", {"request": request, "config_variable": site,
                        "code": code, "title": "Home",
                        "current_user": user})
 

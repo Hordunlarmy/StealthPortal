@@ -10,27 +10,27 @@ class ConnectionManager:
         if secret_code not in self.rooms:
             self.rooms[secret_code] = []
         self.rooms[secret_code].append(websocket)
-        # print(f"Room Content - {self.rooms}")
+        print(f"Room Content - {self.rooms}")
 
     async def user_join(self, secret_code: str, owner_code: str,
                         websocket: WebSocket):
         if not secret_code:
-            # print("Empty code entered")
+            print("Empty code entered")
             return "Empty"
 
         room = self.rooms.get(secret_code)
         if room is None or owner_code not in self.rooms:
-            # print("Incorrect code entered")
+            print("Incorrect code entered")
             return "IncorrectCode"
 
         if websocket in room:
-            # print("User is already in the room")
+            print("User is already in the room")
             return "SelfCode"
 
         room.append(websocket)
         del self.rooms[owner_code]
-        # print(f"User joined room with secret code {secret_code}")
-        # print(f"Room Content - {self.rooms}")
+        print(f"User joined room with secret code {secret_code}")
+        print(f"Room Content - {self.rooms}")
         return "CorrectCode"
 
     async def verify_secret(self, code: str, status: str,
@@ -67,10 +67,10 @@ class ConnectionManager:
                     json_data = json.dumps(data)
                     for ws in self.rooms[secret_code]:
                         await ws.send_text(json_data)
-                # print(f"WebSocket removed from room {secret_code}")
+                print(f"WebSocket removed from room {secret_code}")
                 if not self.rooms[secret_code]:
                     del self.rooms[secret_code]
-                    # print(f"Room {secret_code} is empty and deleted")
+                    print(f"Room {secret_code} is empty and deleted")
             else:
                 print("WebSocket not found in room")
         else:
