@@ -51,7 +51,7 @@ async def websocket_endpoint(websocket: WebSocket,
                 encrypted_message = data.get('message')
                 encrypted_key = data.get('key')
                 iv = data.get('iv')
-                if user.authenticated:
+                if user:
                     print("-----authenticated------")
                     new_message = models.Message(message=encrypted_message,
                                                  key=encrypted_key,
