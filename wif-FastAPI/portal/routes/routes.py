@@ -7,7 +7,8 @@ from portal.engine import get_db
 from sqlalchemy.orm import Session
 from portal.security.auth import (TokenData, Token, login_user, current_user,
                                   logout_user, verify_passwd, hash_passwd)
-from portal.security.rsa import generate_secret_word
+from portal.security.rsa import (generate_secret_word,
+                                 decrypt_key, decrypt_message)
 from typing import Annotated
 from fastapi.templating import Jinja2Templates
 from decouple import config
