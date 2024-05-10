@@ -1,0 +1,6 @@
+*Dockerfile
+*docker-compose.yml
+*.dockerignore
+*stealth-portal-app
+*private_key.pem
+*public_key.pem
