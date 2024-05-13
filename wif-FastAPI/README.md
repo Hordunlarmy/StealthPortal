@@ -2,3 +2,4 @@
 
 ## Running with Docker
 To run this project using Docker, run `docker-compose up --build`
+Then go to `http://localhost:8000/portal/`
