@@ -1,10 +1,12 @@
-FROM python:3.9-slim
+FROM python:3.10.12-slim
 
 WORKDIR /portal_fastAPI
 
-copy . .
+copy requirements.txt .
 
 RUN pip install -r requirements.txt
+
+copy . .
 
 EXPOSE 8000
 
