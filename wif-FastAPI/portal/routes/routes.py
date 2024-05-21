@@ -104,11 +104,15 @@ async def post_login(request: Request, response: Response,
     return templates.TemplateResponse("login.html", {"request": request,
                                                      "title": 'Login',
                                                      "form": form,
-                                                     "current_user": user})
+                                                     "current_user": user},
+                                      status_code=401)
 
 
 @portal.get("/logout")
-async def logout(response: Response):
+async def logout(user: user_dependency, request: Request, response: Response):
+    if user is None:
+        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+                                status_code=401)
     redirect_response = RedirectResponse(url="/portal/", status_code=303)
     await logout_user(redirect_response)
     return redirect_response
@@ -118,7 +122,8 @@ async def logout(response: Response):
 async def profile(request: Request, user: user_dependency,
                   db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal/login?next={request.url.path}")
+        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+                                status_code=401)
     user_data = db.query(models.User).filter(models.User.id == user.id).first()
     form = await UpdateProfileForm.from_formdata(request)
     form.username.data = user_data.username
@@ -133,7 +138,8 @@ async def profile(request: Request, user: user_dependency,
 async def profile_post(request: Request, user: user_dependency,
                        db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal//login?next={request.url.path}")
+        return RedirectResponse(url=f"/portal//login?next={request.url.path}",
+                                status_code=401)
     profile = db.query(models.User).filter(
         models.User.id == user.id).first()
 
@@ -163,7 +169,8 @@ async def history(request: Request,
                   user: Annotated[TokenData, Depends(current_user)],
                   db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal/login?next={request.url.path}")
+        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+                                status_code=401)
     else:
         messages = db.query(models.Message).filter(
             models.Message.user_id == user.id).all()
