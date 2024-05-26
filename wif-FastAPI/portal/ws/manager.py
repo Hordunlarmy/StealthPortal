@@ -19,7 +19,7 @@ class ConnectionManager:
             return "Empty"
 
         room = self.rooms.get(secret_code)
-        if room is None or owner_code not in self.rooms:
+        if room is None or secret_code not in self.rooms:
             print("Incorrect code entered")
             return "IncorrectCode"
 
