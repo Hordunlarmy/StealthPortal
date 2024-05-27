@@ -5,7 +5,7 @@
 <meta name="pub-key" content= {{ config_pubkey }}>
 <form method="post" class="p-2 mt-2"  id="connect-form">
     <div class="logo">
-        <img src="{{url_for('static', path='images/logo.jpg')}}" alt="">
+        <img src="{{url_for('portal_static', path='images/logo.jpg')}}" alt="">
     </div>
     <div class="text-center mt-4 name">
         Connect To Device
@@ -47,5 +47,5 @@
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
 <div style="clear:both;"></div>
-<script src={{ url_for('static', path='js/script.js') }}></script>
+<script src={{ url_for('portal_static', path='js/script.js') }}></script>
 {% endblock content %}

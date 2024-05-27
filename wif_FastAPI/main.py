@@ -12,20 +12,18 @@ except ImportError:
     from portal.ws import socket
 
 
-BASE_PATH = Path(__file__).resolve().parent
 stealth = FastAPI()
-
 base_path_1 = Path("StealthPortal/wif_FastAPI/portal/static")
 base_path_2 = Path("portal/static")
 
 if base_path_1.parent.exists():
     stealth.mount(
         "/static", StaticFiles(directory=f"{base_path_1.resolve()}"),
-        name="static")
+        name="portal_static")
 else:
     stealth.mount(
         "/static", StaticFiles(directory=f"{base_path_2.resolve()}"),
-        name="static")
+        name="portal_static")
 
 stealth.include_router(portal)
 stealth.include_router(socket)

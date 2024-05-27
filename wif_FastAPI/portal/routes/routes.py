@@ -44,7 +44,7 @@ if base_path_1.parent.exists():
         directory=f"{base_path_1.resolve()}")
 else:
     templates = Jinja2Templates(
-        directory=f"{base_path_1.resolve()}")
+        directory=f"{base_path_2.resolve()}")
 
 user_dependency = Annotated[TokenData, Depends(current_user)]
 
