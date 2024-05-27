@@ -52,10 +52,10 @@ user_dependency = Annotated[TokenData, Depends(current_user)]
 @portal.get("/")
 async def index(request: Request, user: user_dependency):
     entry = config('entry', default="portfolio")
-    if entry == "portfolio":
-        site = config('site', default="ws://localhost:8000/portal/")
-    else:
+    if entry == "portal":
         site = config('site', default="ws://localhost:8000/")
+    else:
+        site = config('site', default="ws://localhost:8000/portal/")
     key_contents = config('public_key', default="pass your public key in the "
                           "env variable publickey")
     code = generate_secret_word(5)
