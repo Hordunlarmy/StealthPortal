@@ -1,7 +1,11 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from portal.engine import Base
+
+try:
+    from StealthPortal.wif_FastAPI.portal.engine import Base
+except ImportError:
+    from portal.engine import Base
 
 
 class User(Base):

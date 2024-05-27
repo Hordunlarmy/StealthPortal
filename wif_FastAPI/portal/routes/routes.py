@@ -1,21 +1,46 @@
 from fastapi import (FastAPI, APIRouter, Request, HTTPException,
                      Depends, Response)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from portal.engine.forms import RegistrationForm, LoginForm, UpdateProfileForm
-from portal.engine import models
-from portal.engine import get_db
 from sqlalchemy.orm import Session
-from portal.security.auth import (TokenData, Token, login_user, current_user,
-                                  logout_user, verify_passwd, hash_passwd)
-from portal.security.rsa import (generate_secret_word,
-                                 decrypt_key, decrypt_message)
 from typing import Annotated
 from fastapi.templating import Jinja2Templates
 from decouple import config
+from pathlib import Path
+
+try:
+    from StealthPortal.wif_FastAPI.portal.engine.forms import (
+        RegistrationForm, LoginForm, UpdateProfileForm)
+    from StealthPortal.wif_FastAPI.portal.engine import models
+    from StealthPortal.wif_FastAPI.portal.engine import get_db
+    from StealthPortal.wif_FastAPI.portal.security.auth import (
+        TokenData, Token, login_user, current_user,
+        logout_user, verify_passwd, hash_passwd)
+    from StealthPortal.wif_FastAPI.portal.security.rsa import (
+        generate_secret_word,
+        decrypt_key, decrypt_message)
+
+except ImportError:
+    from portal.engine.forms import (
+        RegistrationForm, LoginForm, UpdateProfileForm)
+    from portal.engine import models
+    from portal.engine import get_db
+    from portal.security.auth import (
+        TokenData, Token, login_user, current_user,
+        logout_user, verify_passwd, hash_passwd)
+    from portal.security.rsa import (
+        generate_secret_word,
+        decrypt_key, decrypt_message)
 
 
 portal = APIRouter()
-templates = Jinja2Templates(directory="portal/templates")
+BASE_PATH = Path(__file__).resolve().parent
+try:
+    templates = Jinja2Templates(
+        directory="StealthPortal/wif_FastAPI/portal/templates")
+except Exception:
+    templates = Jinja2Templates(
+        directory="portal/templates")
+
 user_dependency = Annotated[TokenData, Depends(current_user)]
 
 

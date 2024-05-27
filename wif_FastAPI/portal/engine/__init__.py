@@ -2,7 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./portal/engine/portal.db"
+try:
+    SQLALCHEMY_DATABASE_URL = (
+        "sqlite:///./StealthPortal/wif_FastAPI/"
+        "portal/engine/portal.db"
+    )
+except Exception:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./portal/engine/portal.db"
+
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
@@ -23,5 +30,9 @@ def get_db():
 
 def create_db():
     # Create database if it doesnt already exist
-    from portal.engine import models
+    try:
+        from StealthPortal.wif_FastAPI.portal.engine import models
+    except ImportError:
+        from portal.engine import models
+
     models.Base.metadata.create_all(bind=engine)

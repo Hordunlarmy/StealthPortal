@@ -2,9 +2,14 @@ from starlette_wtf import StarletteForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import (
     DataRequired, Length, Email, EqualTo, ValidationError)
-from portal.engine import models, get_db
 from fastapi import Request
-from portal.security.auth import verify_passwd
+
+try:
+    from StealthPortal.wif_FastAPI.portal.engine import models, get_db
+    from StealthPortal.wif_FastAPI.portal.security.auth import verify_passwd
+except ImportError:
+    from portal.engine import models, get_db
+    from portal.security.auth import verify_passwd
 
 
 class RegistrationForm(StarletteForm):
@@ -47,11 +52,11 @@ class LoginForm(StarletteForm):
     def validate_email(self, email):
         db = next(get_db())
         user = db.query(models.User).filter(
-                models.User.email == email.data).first()
+            models.User.email == email.data).first()
         if not user:
             raise ValidationError(
-                    'Incorrect user email. '
-                    'Please verify you entered the correct email.')
+                'Incorrect user email. '
+                'Please verify you entered the correct email.')
         self.user = user
 
     def validate_password(self, password):
@@ -84,7 +89,7 @@ class UpdateProfileForm(StarletteForm):
         if email.data != self.current_user.email:
             db = next(get_db())
             user = db.query(models.User).filter(
-                    models.User.email == email.data).first()
+                models.User.email == email.data).first()
             if user:
                 raise ValidationError(
                     'That email is taken. Please choose a different one.')

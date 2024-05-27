@@ -1,13 +1,22 @@
 from fastapi import WebSocket, APIRouter, Depends, Request
 from starlette.websockets import WebSocketDisconnect
-from portal.security.rsa import decrypt_key, decrypt_message
 from .manager import ConnectionManager
-from portal.security.auth import get_current_user, current_user, TokenData
-from portal.engine import get_db
 from typing import Annotated
 from sqlalchemy.orm import Session
-from portal.engine import models
 import json
+
+try:
+    from StealthPortal.wif_FastAPI.portal.security.rsa import (
+        decrypt_key, decrypt_message)
+    from StealthPortal.wif_FastAPI.portal.security.auth import (
+        get_current_user, current_user, TokenData)
+    from StealthPortal.wif_FastAPI.portal.engine import models
+    from StealthPortal.wif_FastAPI.portal.engine import get_db
+except ImportError:
+    from portal.security.rsa import decrypt_key, decrypt_message
+    from portal.security.auth import get_current_user, current_user, TokenData
+    from portal.engine import models
+    from portal.engine import get_db
 
 
 socket = APIRouter()
