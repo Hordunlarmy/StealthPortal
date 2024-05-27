@@ -14,8 +14,19 @@ except ImportError:
 
 BASE_PATH = Path(__file__).resolve().parent
 stealth = FastAPI()
-stealth.mount("/static", StaticFiles(directory=BASE_PATH /
-              "portal/static"), name="static")
+
+base_path_1 = Path("StealthPortal/wif_FastAPI/portal/static")
+base_path_2 = Path("portal/static")
+
+if base_path_1.parent.exists():
+    stealth.mount(
+        "/static", StaticFiles(directory=f"{base_path_1.resolve()}"),
+        name="static")
+else:
+    stealth.mount(
+        "/static", StaticFiles(directory=f"{base_path_2.resolve()}"),
+        name="static")
+
 stealth.include_router(portal)
 stealth.include_router(socket)
 
