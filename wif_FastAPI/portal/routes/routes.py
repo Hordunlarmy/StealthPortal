@@ -1,3 +1,4 @@
+import os
 from fastapi import (FastAPI, APIRouter, Request, HTTPException,
                      Depends, Response)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -33,14 +34,16 @@ except ImportError:
 
 
 portal = APIRouter()
-BASE_PATH = Path(__file__).resolve().parent
-try:
-    templates = Jinja2Templates(
-        directory="StealthPortal/wif_FastAPI/portal/templates")
-except Exception:
-    templates = Jinja2Templates(
-        directory="portal/templates")
+# templates = Jinja2Templates(directory=os.path.join(
+#    os.path.dirname(__file__), "templates"))
+# templates = Jinja2Templates(directory="./templates")
 
+base_dir = Path(__file__).resolve().parent
+templates_path = base_dir / "templates"
+templates = Jinja2Templates(directory=templates_path)
+
+print("Current working directory:", os.getcwd())
+print("Templates directory path:", templates_path)
 user_dependency = Annotated[TokenData, Depends(current_user)]
 
 
