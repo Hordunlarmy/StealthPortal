@@ -34,22 +34,28 @@ except ImportError:
 
 
 portal = APIRouter()
-# templates = Jinja2Templates(directory=os.path.join(
-#    os.path.dirname(__file__), "templates"))
-# templates = Jinja2Templates(directory="./templates")
 
-base_dir = Path(__file__).resolve().parent
-templates_path = base_dir / "templates"
-templates = Jinja2Templates(directory=templates_path)
+# Define base paths
+base_path_1 = Path("StealthPortal/wif_FastAPI/portal/templates")
+base_path_2 = Path("portal/templates")
 
-print("Current working directory:", os.getcwd())
-print("Templates directory path:", templates_path)
+if base_path_1.parent.exists():
+    templates = Jinja2Templates(
+        directory=f"{base_path_1.resolve()}")
+else:
+    templates = Jinja2Templates(
+        directory=f"{base_path_1.resolve()}")
+
 user_dependency = Annotated[TokenData, Depends(current_user)]
 
 
 @portal.get("/")
 async def index(request: Request, user: user_dependency):
-    site = config('site', default="ws://localhost:8000/portal/")
+    entry = config('entry', default="portfolio")
+    if entry == "portfolio":
+        site = config('site', default="ws://localhost:8000/portal/")
+    else:
+        site = config('site', default="ws://localhost:8000/")
     key_contents = config('public_key', default="pass your public key in the "
                           "env variable publickey")
     code = generate_secret_word(5)
