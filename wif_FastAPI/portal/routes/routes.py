@@ -1,12 +1,12 @@
-import os
+from pathlib import Path
+from decouple import config
+from fastapi.templating import Jinja2Templates
+from typing import Annotated
+from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi import (FastAPI, APIRouter, Request, HTTPException,
                      Depends, Response)
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy.orm import Session
-from typing import Annotated
-from fastapi.templating import Jinja2Templates
-from decouple import config
-from pathlib import Path
+import os
 
 try:
     from StealthPortal.wif_FastAPI.portal.engine.forms import (
@@ -100,7 +100,7 @@ async def register_post(request: Request, user: user_dependency,
             print(e)
 
         # flash(f'Account created for {form.username.data}!', 'success')
-        return RedirectResponse(url="/portal/login", status_code=303)
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("register.html", {"request": request,
                                                         "title": 'Register',
                                                         "form": form,
@@ -129,7 +129,7 @@ async def post_login(request: Request, response: Response,
 
         next_page = request.query_params.get('next')
         next_page_red = RedirectResponse(url=next_page, status_code=303)
-        normal_redirect = RedirectResponse(url="/portal/", status_code=303)
+        normal_redirect = RedirectResponse(url="/", status_code=303)
         redirect_response = next_page_red if next_page else normal_redirect
         await login_user(redirect_response, user,
                          remember=form.remember.data)
@@ -145,9 +145,9 @@ async def post_login(request: Request, response: Response,
 @portal.get("/logout")
 async def logout(user: user_dependency, request: Request, response: Response):
     if user is None:
-        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+        return RedirectResponse(url=f"/login?next={request.url.path}",
                                 status_code=401)
-    redirect_response = RedirectResponse(url="/portal/", status_code=303)
+    redirect_response = RedirectResponse(url="/", status_code=303)
     await logout_user(redirect_response)
     return redirect_response
 
@@ -156,7 +156,7 @@ async def logout(user: user_dependency, request: Request, response: Response):
 async def profile(request: Request, user: user_dependency,
                   db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+        return RedirectResponse(url=f"/login?next={request.url.path}",
                                 status_code=401)
     user_data = db.query(models.User).filter(models.User.id == user.id).first()
     form = await UpdateProfileForm.from_formdata(request)
@@ -172,7 +172,7 @@ async def profile(request: Request, user: user_dependency,
 async def profile_post(request: Request, user: user_dependency,
                        db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal//login?next={request.url.path}",
+        return RedirectResponse(url=f"/login?next={request.url.path}",
                                 status_code=401)
     profile = db.query(models.User).filter(
         models.User.id == user.id).first()
@@ -187,7 +187,7 @@ async def profile_post(request: Request, user: user_dependency,
             try:
                 db.commit()
                 db.refresh(profile)
-                return RedirectResponse(url='/portal/profile', status_code=303)
+                return RedirectResponse(url='/profile', status_code=303)
             except Exception as e:
                 db.rollback()
                 print(e)  # Consider using logging instead of print
@@ -203,7 +203,7 @@ async def history(request: Request,
                   user: Annotated[TokenData, Depends(current_user)],
                   db: Session = Depends(get_db)):
     if user is None:
-        return RedirectResponse(url=f"/portal/login?next={request.url.path}",
+        return RedirectResponse(url=f"/login?next={request.url.path}",
                                 status_code=401)
     else:
         messages = db.query(models.Message).filter(
