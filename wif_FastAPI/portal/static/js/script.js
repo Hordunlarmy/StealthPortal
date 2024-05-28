@@ -149,6 +149,12 @@ document.addEventListener("DOMContentLoaded", function() {
     catch (error) {
       console.log('Error parsing JSON:', error, data);
     }
+
+    if (data.keep_alive === "ping") {
+      socket.send(JSON.stringify({ event: "pong"}));
+      // console.log("I'm Alive")
+    }
+
     if (data.kind === "Verify") {
       if (data.status === "CorrectCode") {
         let room_code = data.code;

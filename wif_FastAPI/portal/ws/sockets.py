@@ -4,6 +4,7 @@ from .manager import ConnectionManager
 from typing import Annotated
 from sqlalchemy.orm import Session
 import json
+import asyncio
 
 try:
     from StealthPortal.wif_FastAPI.portal.security.rsa import (
@@ -37,13 +38,19 @@ async def websocket_endpoint(websocket: WebSocket,
                 schema, token = the_token.split()
             user_data = await get_current_user(token)
             user = await current_user(user_data)
-            data_str = await websocket.receive_text()
+
+            json_data = json.dumps({"keep_alive": "ping"})
+            await websocket.send_text(json_data)
+            data_str = await asyncio.wait_for(websocket.receive_text(),
+                                              timeout=30)
             try:
                 data = json.loads(data_str)
             except json.JSONDecodeError:
                 print("Invalid JSON data received:", data_str)
                 continue
             event_type = data.get("event")
+            if data == "pong":
+                continue
             if event_type == "secret-code":
                 secret_code = data.get("code")
                 print(f"Secret_code - {secret_code}")
