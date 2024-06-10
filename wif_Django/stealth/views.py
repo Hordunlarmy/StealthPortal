@@ -25,7 +25,7 @@ def login(request):
 
 
 def about(request):
-    return HttpResponse("about Page")
+    return render(request, 'about.html', {'title': 'About'})
 
 
 def history(request):
