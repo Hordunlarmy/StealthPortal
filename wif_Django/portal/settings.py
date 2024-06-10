@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'stealth.apps.StealthConfig'
+    'stealth.apps.StealthConfig',
 ]
 
 MIDDLEWARE = [

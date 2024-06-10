@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %} StealthPortal - {{ title }}  {% endblock title %}
 {% block content %}
 <meta name="site-config" content= {{ config_variable }}>
 <meta name="pub-key" content= {{ config_pubkey }}>
 <form method="post" class="p-2 mt-2"  id="connect-form">
     <div class="logo">
-        <img src="{{url_for('portal_static', path='images/logo.jpg')}}" alt="">
+        <img src="{% static 'images/logo.jpg' %}" alt="">
     </div>
     <div class="text-center mt-4 name">
         Connect To Device
@@ -31,7 +33,7 @@
 
 <form method="post" class="p-3 mt-3" id="message-form" data-code="">
     <div class="logo">
-        <img src="{{url_for('portal_static', path='images/logo.jpg')}}" alt="">
+        <img src="{% static 'images/logo.jpg' %}" alt="">
     </div>
     <div class="text-center mt-4 name">
         Send Message
@@ -47,5 +49,5 @@
 <!-- Message box for displaying server messages -->
 <div id="message-box" class="hidden"></div>
 <div style="clear:both;"></div>
-<script src={{ url_for('portal_static', path='js/script.js') }}></script>
+<script src={% static 'js/script.js' %}></script>
 {% endblock content %}
