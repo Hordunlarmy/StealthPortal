@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %} StealthPortal - {{ title }}  {% endblock title %}
+{% block content %}
+<meta name="site-config" content= {{ config_variable }}>
+<meta name="pub-key" content= {{ config_pubkey }}>
+<form method="post" class="p-2 mt-2"  id="connect-form">
+    <div class="logo">
+        <img src="{{url_for('portal_static', path='images/logo.jpg')}}" alt="">
+    </div>
+    <div class="text-center mt-4 name">
+        Connect To Device
+    </div>
+    <p id='user-code' align="center"><b>{{code}}</b></p>
+    <p style="font-size: small; color: darkblue; text-align: center;">enter the above code on the other device to connect</p>
+  <div class="form-field d-flex align-items-center">
+    <span class="fas fa-key"></span>
+    <input type="text" placeholder="Enter Secret Code" name="code" id="code-input" />
+  </div>
+  </br>
+    <p style="font-size: small; color: darkblue; text-align: center;">or scan the QR code with the other device to connect</p>
+  <div id="qrcode" align="center"></div>
+  <div id="overlay" class="overlay">
+    <div id="reader-container" class="reader-container">
+        <div id="reader"></div>
+    </div>
+  </div>
+  </br>
+    <button class="btn mt-3" type="submit" id="connect-btn">Connect</button>
+    <button class="btn mt-3"  type="button" id="scan-btn">Scan QR</button>
+</form>
+
+<form method="post" class="p-3 mt-3" id="message-form" data-code="">
+    <div class="logo">
+        <img src="{{url_for('portal_static', path='images/logo.jpg')}}" alt="">
+    </div>
+    <div class="text-center mt-4 name">
+        Send Message
+    </div>
+  <p id="code-value" align="center"></p>
+  <div class="form-field d-flex align-items-center">
+      <textarea rows="2" placeholder="Type your message..." name="message" id="message-input"></textarea>
+  </div>
+    <button class="btn mt-3" type="submit" name="send">Send</button>
+</form>
+<br/>
+
+<!-- Message box for displaying server messages -->
+<div id="message-box" class="hidden"></div>
+<div style="clear:both;"></div>
+<script src={{ url_for('portal_static', path='js/script.js') }}></script>
+{% endblock content %}
