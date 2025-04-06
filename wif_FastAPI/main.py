@@ -2,6 +2,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 try:
@@ -17,6 +18,14 @@ except ImportError:
 stealth = FastAPI()
 base_path_1 = Path("StealthPortal/wif_FastAPI/portal/static")
 base_path_2 = Path("portal/static")
+
+stealth.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if base_path_1.parent.exists():
     stealth.mount(

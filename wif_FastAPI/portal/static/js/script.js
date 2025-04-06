@@ -1,25 +1,23 @@
-document.addEventListener("DOMContentLoaded", function() {
-  console.log("DOM content loaded");
-
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('DOM content loaded');
 
   // Hide message-form initially
-  document.getElementById("message-form").classList.add("hidden");
+  document.getElementById('message-form').classList.add('hidden');
 
   // Hide connect buttons
-  document.getElementById("connect-btn").classList.add("hidden");
-  document.getElementById("scan-btn").classList.add("hidden");
+  document.getElementById('connect-btn').classList.add('hidden');
+  document.getElementById('scan-btn').classList.add('hidden');
 
-  let userCode = document.getElementById("user-code").textContent;
+  let userCode = document.getElementById('user-code').textContent;
 
-  var qrcode = new QRCode(document.getElementById("qrcode"), {
+  var qrcode = new QRCode(document.getElementById('qrcode'), {
     text: userCode,
     width: 128,
     height: 128,
-    colorDark : "#000000",
-    colorLight : "#ffffff",
-    correctLevel : QRCode.CorrectLevel.H
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
   });
-
 
   const html5Qrcode = new Html5Qrcode('reader');
   const config = { fps: 10, qrbox: { width: 250, height: 250 } };
@@ -29,16 +27,20 @@ document.addEventListener("DOMContentLoaded", function() {
   const startQRScan = () => {
     if (!isScanning) {
       isScanning = true;
-      html5Qrcode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+      html5Qrcode.start(
+        { facingMode: 'environment' },
+        config,
+        qrCodeSuccessCallback,
+      );
     }
   };
 
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
     if (decodedText) {
       stopQRScan(); // Stop scanning
-      document.getElementById("code-input").value = decodedText;
-      document.getElementById("connect-btn").click();
-      document.getElementById("overlay").style.display = "none"; // Close overlay
+      document.getElementById('code-input').value = decodedText;
+      document.getElementById('connect-btn').click();
+      document.getElementById('overlay').style.display = 'none'; // Close overlay
     }
   };
 
@@ -50,146 +52,171 @@ document.addEventListener("DOMContentLoaded", function() {
   };
 
   // Show QR reader overlay
-  document.getElementById("scan-btn").addEventListener("click", function() {
-    document.getElementById("overlay").style.display = "block";
+  document.getElementById('scan-btn').addEventListener('click', function () {
+    document.getElementById('overlay').style.display = 'block';
     startQRScan();
   });
 
   // Close QR reader overlay
-  document.getElementById("overlay").addEventListener("click", function(event) {
-    if (event.target === this) {
-      document.getElementById("overlay").style.display = "none";
-      document.getElementById("reader-container").classList.remove("hidden");
-      stopQRScan();
-    }
-  });
+  document
+    .getElementById('overlay')
+    .addEventListener('click', function (event) {
+      if (event.target === this) {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('reader-container').classList.remove('hidden');
+        stopQRScan();
+      }
+    });
 
   // Add event listener to the button
-  document.getElementById("scan-btn").addEventListener("click", startQRScan);
+  document.getElementById('scan-btn').addEventListener('click', startQRScan);
 
   // var socket = new WebSocket("wss://hordun.tech/portal/");
-  const site = document.querySelector('meta[name="site-config"]').getAttribute('content');
+  const site = document
+    .querySelector('meta[name="site-config"]')
+    .getAttribute('content');
   const socket = new WebSocket(site);
 
-  if (socket.readyState === WebSocket.CLOSING || socket.readyState === WebSocket.CLOSED) {
-    console.log("WebSocket is closing or already closed.");
-    alert("Connection is closing or already closed. Please try reconnecting.");
+  if (
+    socket.readyState === WebSocket.CLOSING ||
+    socket.readyState === WebSocket.CLOSED
+  ) {
+    console.log('WebSocket is closing or already closed.');
+    alert('Connection is closing or already closed. Please try reconnecting.');
   }
 
-  socket.onopen = function(event) {
-    document.getElementById("connect-btn").classList.remove("hidden");
-    document.getElementById("scan-btn").classList.remove("hidden");
-    console.log("WebSocket connection established at", socket.url);
+  socket.onopen = function (event) {
+    document.getElementById('connect-btn').classList.remove('hidden');
+    document.getElementById('scan-btn').classList.remove('hidden');
+    console.log('WebSocket connection established at', socket.url);
 
     // Send data to backend
-    socket.send(JSON.stringify({ event: "secret-code", code: userCode }));
+    socket.send(JSON.stringify({ event: 'secret-code', code: userCode }));
   };
 
   // Add event listener to connect-form after DOM content is loaded
-  document.getElementById("connect-form").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent the form from submitting normally
+  document
+    .getElementById('connect-form')
+    .addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent the form from submitting normally
 
-    codeInput = document.getElementById("code-input").value; // Set codeInput value
+      codeInput = document.getElementById('code-input').value; // Set codeInput value
 
-    socket.send(JSON.stringify({ event: "join", code: codeInput }));
-
-  });
+      socket.send(JSON.stringify({ event: 'join', code: codeInput }));
+    });
 
   // Add event listener for message-form submit
-  document.getElementById("message-form").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent the form from submitting normally
+  document
+    .getElementById('message-form')
+    .addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent the form from submitting normally
 
-
-    function generateRandomNumber(length) {
-      var result = '';
-      var characters = '0123456789abcdef';
-      var charactersLength = characters.length;
-      for (var i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      function generateRandomNumber(length) {
+        var result = '';
+        var characters = '0123456789abcdef';
+        var charactersLength = characters.length;
+        for (var i = 0; i < length; i++) {
+          result += characters.charAt(
+            Math.floor(Math.random() * charactersLength),
+          );
+        }
+        return result;
       }
-      return result;
-    }
 
-    const sendMessage = () => {
-      const messageInput = document.getElementById("message-input");
-      const message = messageInput.value.trim();
-      if (message === "") return;
+      const sendMessage = () => {
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        if (message === '') return;
 
-      var secretKey = generateRandomNumber(32);
-      var aesKey = CryptoJS.enc.Base64.parse(secretKey);
-      var ivGen = Array.from({length: 16}, () => Math.floor(Math.random() * 10)).join('');
-      var iv = CryptoJS.enc.Utf8.parse(ivGen);
-      var encryptionOptions = {
-        iv: iv,
-        mode: CryptoJS.mode.CBC
+        var secretKey = generateRandomNumber(32);
+        var aesKey = CryptoJS.enc.Base64.parse(secretKey);
+        var ivGen = Array.from({ length: 16 }, () =>
+          Math.floor(Math.random() * 10),
+        ).join('');
+        var iv = CryptoJS.enc.Utf8.parse(ivGen);
+        var encryptionOptions = {
+          iv: iv,
+          mode: CryptoJS.mode.CBC,
+        };
+        var encryptedMessage = CryptoJS.AES.encrypt(
+          message,
+          aesKey,
+          encryptionOptions,
+        ).toString();
+        const pub_key = document
+          .querySelector('meta[name="pub-key"]')
+          .getAttribute('content');
+        const pub_key_bytes = forge.util.decode64(pub_key);
+        const publicKey = forge.pki.publicKeyFromPem(pub_key_bytes);
+
+        var encryptedKey = publicKey.encrypt(secretKey, 'RSA-OAEP', {
+          md: forge.md.sha256.create(),
+          mgf1: forge.mgf1.create(),
+        });
+        var base64 = forge.util.encode64(encryptedKey);
+        code = document.getElementById('code-value').textContent;
+        socket.send(
+          JSON.stringify({
+            event: 'encryption',
+            message: encryptedMessage,
+            key: base64,
+            iv: ivGen,
+            code: code,
+          }),
+        );
       };
-      var encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, encryptionOptions).toString();
-      const pub_key = document.querySelector('meta[name="pub-key"]').getAttribute('content');
-      const pub_key_bytes = forge.util.decode64(pub_key);
-      const publicKey = forge.pki.publicKeyFromPem(pub_key_bytes);
 
-      var encryptedKey = publicKey.encrypt(secretKey, "RSA-OAEP", {
-        md: forge.md.sha256.create(),
-        mgf1: forge.mgf1.create()
-      });
-      var base64 = forge.util.encode64(encryptedKey);
-      code = document.getElementById("code-value").textContent
-      socket.send(JSON.stringify({ event: "encryption", message: encryptedMessage, key: base64, iv: ivGen, code: code }));
-    };
-
-    sendMessage();
-    document.getElementById("message-input").value = "";
-
-  });
+      sendMessage();
+      document.getElementById('message-input').value = '';
+    });
   // Handle user-join-response event from the server
-  socket.onmessage = function(event) {
+  socket.onmessage = function (event) {
     try {
       var data = JSON.parse(event.data);
-    }
-    catch (error) {
+    } catch (error) {
       console.log('Error parsing JSON:', error, data);
     }
 
-    if (data.keep_alive === "ping") {
-      socket.send(JSON.stringify({ event: "pong"}));
+    if (data.keep_alive === 'ping') {
+      socket.send(JSON.stringify({ event: 'pong' }));
       // console.log("I'm Alive")
     }
 
-    if (data.kind === "Verify") {
-      if (data.status === "CorrectCode") {
+    if (data.kind === 'Verify') {
+      if (data.status === 'CorrectCode') {
         let room_code = data.code;
         // Hide connect-form and show message-form
-        document.getElementById("code-value").textContent = room_code;
-        document.getElementById("connect-form").classList.add("hidden");
-        document.getElementById("message-form").classList.remove("hidden");
-      } else if (data.status === "SelfCode") {
+        document.getElementById('code-value').textContent = room_code;
+        document.getElementById('connect-form').classList.add('hidden');
+        document.getElementById('message-form').classList.remove('hidden');
+      } else if (data.status === 'SelfCode') {
         alert("Can't Use Your Own Code");
-      } else if (data.status === "IncorrectCode") {
-        alert("Wrong Code!!!");
-      } else if (data.status === "Empty") {
-        alert("You need to enter a code");
+      } else if (data.status === 'IncorrectCode') {
+        alert('Wrong Code!!!');
+      } else if (data.status === 'Empty') {
+        alert('You need to enter a code');
       }
-    } else if (data.kind === "refresh") {
-      if (data.status === "Reset") {
-        alert("You are the only one left. Portal Closed.");
+    } else if (data.kind === 'refresh') {
+      if (data.status === 'Reset') {
+        alert('You are the only one left. Portal Closed.');
         location.reload();
       }
-    } else if (data.kind === "messageSubmit") {
-      if (data.sender === "isMe") {
-        console.log("I am a sender")
-        messageClass = "sender-message own";
-        divClass = "inlineContainer own"
-        timeClass = "own"
+    } else if (data.kind === 'messageSubmit') {
+      if (data.sender === 'isMe') {
+        console.log('I am a sender');
+        messageClass = 'sender-message own';
+        divClass = 'inlineContainer own';
+        timeClass = 'own';
       } else {
-        console.log("I am a receiver")
-        messageClass = "receiver-message other";
-        divClass = "inlineContainer other"
-        timeClass = "other"
+        console.log('I am a receiver');
+        messageClass = 'receiver-message other';
+        divClass = 'inlineContainer other';
+        timeClass = 'other';
       }
       var timeUTC = new Date().toUTCString().slice(-12, -7);
       // Unhide the message box
-      document.getElementById("message-box").classList.remove("hidden");
-      document.getElementById("message-box").classList.add("scrollable");
+      document.getElementById('message-box').classList.remove('hidden');
+      document.getElementById('message-box').classList.add('scrollable');
 
       // Append the received message to the message box with appropriate styling
       var messageElement = `
@@ -202,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 `;
 
-      var messageBox = document.getElementById("message-box");
+      var messageBox = document.getElementById('message-box');
       messageBox.innerHTML += messageElement;
 
       // Scroll to the bottom of the message box
@@ -210,8 +237,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   };
 
-  socket.onclose = function(event) {
-    console.log("Websocket Closed Gracefully")
-    socket.send(JSON.stringify({ event: "refresh"}));
+  socket.onclose = function (event) {
+    console.log('Websocket Closed Gracefully');
+    socket.send(JSON.stringify({ event: 'refresh' }));
   };
 });
