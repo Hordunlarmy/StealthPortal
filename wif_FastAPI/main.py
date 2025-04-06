@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
+
 try:
     from ..wif_FastAPI.portal.engine import create_db
     from ..wif_FastAPI.portal.routes import portal
@@ -18,12 +20,17 @@ base_path_2 = Path("portal/static")
 
 if base_path_1.parent.exists():
     stealth.mount(
-        "/static", StaticFiles(directory=f"{base_path_1.resolve()}"),
-        name="portal_static")
+        "/static",
+        StaticFiles(directory=f"{base_path_1.resolve()}"),
+        name="portal_static",
+    )
 else:
     stealth.mount(
-        "/static", StaticFiles(directory=f"{base_path_2.resolve()}"),
-        name="portal_static")
+        "/static",
+        StaticFiles(directory=f"{base_path_2.resolve()}"),
+        name="portal_static",
+    )
+
 
 stealth.include_router(portal)
 stealth.include_router(socket)

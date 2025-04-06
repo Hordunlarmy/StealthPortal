@@ -1,8 +1,19 @@
-version: '3.8'
-
 services:
   portal_app:
     build: .
-    command: ["python3", "main.py"]
+    container_name: stealth-portal
     ports:
-      - "8000:8000"
+      - "${app_port}:${app_port}"
+    volumes:
+      - .:/app
+    environment:
+      - PORT=${app_port}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${app_port}"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: always
